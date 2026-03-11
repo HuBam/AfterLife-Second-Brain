@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../store/useStore'
 import { Sparkles, ArrowRight, ArrowLeft, User, Calendar, Brain, HelpCircle, Check, Edit3, Heart } from 'lucide-react'
 import MBTIAssessment from '../components/MBTIAssessment'
-import { personalityTypes, generateStarterSkills, lifeCategories } from '../data/mbtiData'
+import { personalityTypes, generateStarterSkills, lifeCategories, enneagramQuestions, calculateEnneagram } from '../data/mbtiData'
 import { religions } from '../data/religionData'
+import { getWesternZodiac, getChineseZodiac } from '../data/astrologyData'
+import { spiritAnimals, getSpiritAnimal } from '../data/spiritAnimalData'
 
 const mbtiTypes = [
     'INTJ', 'INTP', 'ENTJ', 'ENTP',
@@ -23,8 +25,15 @@ export default function Onboarding() {
         mbti: '',
         mbtiScores: null,
         mbtiPath: null, // 'know', 'test', 'manual', 'skip'
+        gender: null, // 'male', 'female', 'non-binary', 'skip'
         religion: null,
         customReligion: '',
+        mbtiVariant: 'A', // Default to Assertive
+        enneagram: null,
+        enneagramAnswers: {},
+        enneagramPath: 'know', // 'know', 'test', 'skip'
+        spiritAnimal: null,
+        mode: 'basic', // 'basic' or 'advanced'
     })
 
     const calculateAge = (birthDate) => {
@@ -47,6 +56,10 @@ export default function Onboarding() {
             starterSkills = generateStarterSkills(formData.mbti)
         }
 
+        // Final Spirit Animal Calculation
+        const birthMonth = formData.birthDate ? new Date(formData.birthDate).getMonth() : 0
+        const finalSpiritAnimal = formData.spiritAnimal || getSpiritAnimal(formData.mbti, formData.enneagram, birthMonth).name
+
         // Complete onboarding
         completeOnboarding({
             name: formData.name,
@@ -55,8 +68,15 @@ export default function Onboarding() {
             age,
             mbti: formData.mbti,
             mbtiScores: formData.mbtiScores,
+            gender: formData.gender,
             religion: formData.religion,
             customReligion: formData.customReligion,
+            mbtiVariant: formData.mbtiVariant,
+            enneagram: formData.enneagram,
+            spiritAnimal: finalSpiritAnimal,
+            westernZodiac: getWesternZodiac(formData.birthDate),
+            chineseZodiac: getChineseZodiac(new Date(formData.birthDate).getFullYear()),
+            mode: formData.mode,
         })
 
         // Add starter skills to Cerebra
@@ -71,7 +91,7 @@ export default function Onboarding() {
             mbti: result.type,
             mbtiScores: result.percentages,
         }))
-        setStep(5) // Go to results
+        setStep(6) // Go to results (shifted from 5)
     }
 
     const handleManualPercentages = (scores) => {
@@ -87,7 +107,7 @@ export default function Onboarding() {
             mbti: type,
             mbtiScores: scores,
         }))
-        setStep(5)
+        setStep(6)
     }
 
     // Step Components
@@ -113,6 +133,56 @@ export default function Onboarding() {
         </div>
     )
 
+    // Step 1 — Mode Selection
+    const ModeStep = () => (
+        <div className="text-center">
+            <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-lg"
+            >
+                <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>⚙️</div>
+                <h2 className="font-display" style={{ fontSize: '1.5rem' }}>Choose Your Experience</h2>
+                <p className="text-secondary text-sm mt-sm" style={{ maxWidth: '360px', margin: '0.5rem auto 0' }}>
+                    You can change this anytime in Settings.
+                </p>
+            </motion.div>
+
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '2rem' }}>
+                <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className={`choice-card glass-card ${formData.mode === 'basic' ? 'active' : ''}`}
+                    onClick={() => setFormData({ ...formData, mode: 'basic' })}
+                    style={{ border: formData.mode === 'basic' ? '2px solid var(--accent-primary)' : '2px solid rgba(255,255,255,0.1)', maxWidth: '160px' }}
+                >
+                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🪐</div>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '0.25rem' }}>Basic</h3>
+                    <p className="text-secondary" style={{ fontSize: '0.75rem' }}>Clean & minimal. Track your life without the game layer.</p>
+                </motion.button>
+
+                <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className={`choice-card glass-card ${formData.mode === 'advanced' ? 'active' : ''}`}
+                    onClick={() => setFormData({ ...formData, mode: 'advanced' })}
+                    style={{ border: formData.mode === 'advanced' ? '2px solid var(--accent-primary)' : '2px solid rgba(255,255,255,0.1)', maxWidth: '160px' }}
+                >
+                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎮</div>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '0.25rem' }}>Advanced</h3>
+                    <p className="text-secondary" style={{ fontSize: '0.75rem' }}>Full game-style UI. XP, levels, animated events & more.</p>
+                </motion.button>
+            </div>
+
+            <div className="flex gap-md justify-center">
+                <button className="btn btn-ghost" onClick={() => setStep(0)}>Back</button>
+                <button className="btn btn-primary" onClick={() => setStep(2)}>
+                    Continue <ArrowRight size={18} />
+                </button>
+            </div>
+        </div>
+    )
+
     const NameStep = () => (
         <div className="text-center">
             <div className="realm-icon mb-lg" style={{ margin: '0 auto', background: 'var(--accent-primary)' }}>
@@ -128,10 +198,10 @@ export default function Onboarding() {
                 autoFocus
             />
             <div className="flex gap-md justify-center mt-xl">
-                <button className="btn btn-ghost" onClick={() => setStep(0)}>Back</button>
+                <button className="btn btn-ghost" onClick={() => setStep(1)}>Back</button>
                 <button
                     className="btn btn-primary"
-                    onClick={() => setStep(2)}
+                    onClick={() => setStep(3)}
                     disabled={!formData.name.trim()}
                 >
                     Continue <ArrowRight size={18} />
@@ -283,7 +353,7 @@ export default function Onboarding() {
                     <button className="btn btn-ghost" onClick={() => setStep(1)}>Back</button>
                     <button
                         className="btn btn-primary"
-                        onClick={() => setStep(3)}
+                        onClick={() => setStep(3)} // Go to Gender
                         disabled={!displayYear || !month || !day}
                     >
                         Continue <ArrowRight size={18} />
@@ -292,6 +362,58 @@ export default function Onboarding() {
             </div>
         )
     }
+
+    const GenderStep = () => (
+        <div className="text-center">
+            <div className="realm-icon mb-lg" style={{ margin: '0 auto', background: 'var(--accent-primary)' }}>
+                <User size={24} />
+            </div>
+            <h2 className="mb-md">Choose your character's essence</h2>
+            <p className="text-secondary text-sm mb-lg">This determines your personality avatar</p>
+
+            <div className="mbti-grid" style={{ maxWidth: '400px', margin: '0 auto' }}>
+                <button
+                    className={`mbti-btn ${formData.gender === 'male' ? 'active' : ''}`}
+                    onClick={() => setFormData({ ...formData, gender: 'male' })}
+                >
+                    <span className="mbti-type">MARS</span>
+                    <span className="mbti-name text-xs">Male</span>
+                </button>
+                <button
+                    className={`mbti-btn ${formData.gender === 'female' ? 'active' : ''}`}
+                    onClick={() => setFormData({ ...formData, gender: 'female' })}
+                >
+                    <span className="mbti-type">VENUS</span>
+                    <span className="mbti-name text-xs">Female</span>
+                </button>
+                <button
+                    className={`mbti-btn ${formData.gender === 'non-binary' ? 'active' : ''}`}
+                    onClick={() => setFormData({ ...formData, gender: 'non-binary' })}
+                >
+                    <span className="mbti-type">NEBULA</span>
+                    <span className="mbti-name text-xs">Non-binary</span>
+                </button>
+                <button
+                    className={`mbti-btn ${formData.gender === 'skip' ? 'active' : ''}`}
+                    onClick={() => setFormData({ ...formData, gender: 'skip' })}
+                >
+                    <span className="mbti-type">SKIP</span>
+                    <span className="mbti-name text-xs">Dynamic</span>
+                </button>
+            </div>
+
+            <div className="flex gap-md justify-center mt-xl">
+                <button className="btn btn-ghost" onClick={() => setStep(2)}>Back</button>
+                <button
+                    className="btn btn-primary"
+                    onClick={() => setStep(4)}
+                    disabled={!formData.gender}
+                >
+                    Continue <ArrowRight size={18} />
+                </button>
+            </div>
+        </div>
+    )
 
     const MBTIChoiceStep = () => (
         <div className="text-center">
@@ -304,7 +426,7 @@ export default function Onboarding() {
             <div className="mbti-choice-grid">
                 <button
                     className="choice-card glass-card"
-                    onClick={() => { setFormData({ ...formData, mbtiPath: 'know' }); setStep(4) }}
+                    onClick={() => { setFormData({ ...formData, mbtiPath: 'know' }); setStep(5) }}
                 >
                     <Check size={32} className="mb-sm" style={{ color: 'var(--accent-primary)' }} />
                     <h3>I Know My Type</h3>
@@ -313,7 +435,7 @@ export default function Onboarding() {
 
                 <button
                     className="choice-card glass-card"
-                    onClick={() => { setFormData({ ...formData, mbtiPath: 'test' }); setStep(4) }}
+                    onClick={() => { setFormData({ ...formData, mbtiPath: 'test' }); setStep(5) }}
                 >
                     <HelpCircle size={32} className="mb-sm" style={{ color: '#f59e0b' }} />
                     <h3>Take The Test</h3>
@@ -322,7 +444,7 @@ export default function Onboarding() {
 
                 <button
                     className="choice-card glass-card"
-                    onClick={() => { setFormData({ ...formData, mbtiPath: 'manual' }); setStep(4) }}
+                    onClick={() => { setFormData({ ...formData, mbtiPath: 'manual' }); setStep(5) }}
                 >
                     <Edit3 size={32} className="mb-sm" style={{ color: '#8b5cf6' }} />
                     <h3>Enter My Percentages</h3>
@@ -331,10 +453,10 @@ export default function Onboarding() {
             </div>
 
             <div className="flex gap-md justify-center mt-xl">
-                <button className="btn btn-ghost" onClick={() => setStep(2)}>Back</button>
+                <button className="btn btn-ghost" onClick={() => setStep(3)}>Back</button>
                 <button
                     className="btn btn-ghost text-secondary"
-                    onClick={() => { setFormData({ ...formData, mbtiPath: 'skip' }); setStep(5) }}
+                    onClick={() => { setFormData({ ...formData, mbtiPath: 'skip' }); setStep(6) }}
                 >
                     Skip for now
                 </button>
@@ -350,7 +472,7 @@ export default function Onboarding() {
                 <MBTIAssessment
                     mode="basic"
                     onComplete={handleAssessmentComplete}
-                    onBack={() => setStep(3)}
+                    onBack={() => setStep(4)}
                 />
             )
         } else if (formData.mbtiPath === 'manual') {
@@ -376,10 +498,10 @@ export default function Onboarding() {
                 ))}
             </div>
             <div className="flex gap-md justify-center mt-xl">
-                <button className="btn btn-ghost" onClick={() => setStep(3)}>Back</button>
+                <button className="btn btn-ghost" onClick={() => setStep(4)}>Back</button>
                 <button
                     className="btn btn-primary"
-                    onClick={() => setStep(5)}
+                    onClick={() => setStep(6)}
                     disabled={!formData.mbti}
                 >
                     Continue <ArrowRight size={18} />
@@ -435,7 +557,7 @@ export default function Onboarding() {
                 </div>
 
                 <div className="flex gap-md justify-center mt-xl">
-                    <button className="btn btn-ghost" onClick={() => setStep(3)}>Back</button>
+                    <button className="btn btn-ghost" onClick={() => setStep(4)}>Back</button>
                     <button
                         className="btn btn-primary"
                         onClick={() => handleManualPercentages(scores)}
@@ -506,23 +628,165 @@ export default function Onboarding() {
                 )}
 
                 <div className="flex gap-md justify-center mt-xl">
-                    <button className="btn btn-ghost" onClick={() => setStep(4)}>Back</button>
+                    <button className="btn btn-ghost" onClick={() => setStep(5)}>Back</button>
                     <button
                         className="btn btn-ghost"
                         onClick={() => {
                             setFormData(prev => ({ ...prev, religion: null, customReligion: '' }))
-                            setStep(6)
+                            setStep(7)
                         }}
                     >
                         Skip for now
                     </button>
                     <button
                         className="btn btn-primary"
-                        onClick={() => setStep(6)}
+                        onClick={() => setStep(7)}
                         disabled={formData.religion === 'other' && !formData.customReligion}
                     >
                         Continue <ArrowRight size={18} />
                     </button>
+                </div>
+            </div>
+        )
+    }
+
+    // Enneagram Choice Step
+    const EnneagramChoiceStep = () => {
+        return (
+            <div className="text-center">
+                <div className="realm-icon mb-lg" style={{ margin: '0 auto', background: 'var(--realm-cerebra)' }}>
+                    <Brain size={24} />
+                </div>
+                <h2 className="mb-md">The Enneagram</h2>
+                <p className="text-secondary text-sm mb-lg">Discover your core motivation and inner fears.</p>
+
+                <div className="mbti-choice-grid">
+                    <button
+                        className="choice-card glass-card"
+                        onClick={() => { setFormData({ ...formData, enneagramPath: 'know' }); setStep(8) }}
+                    >
+                        <Check size={32} className="mb-sm" style={{ color: '#10b981' }} />
+                        <h3>I Know My Type</h3>
+                        <p className="text-secondary text-sm">Select from types 1-9</p>
+                    </button>
+
+                    <button
+                        className="choice-card glass-card"
+                        onClick={() => { setFormData({ ...formData, enneagramPath: 'test' }); setStep(8) }}
+                    >
+                        <HelpCircle size={32} className="mb-sm" style={{ color: '#f59e0b' }} />
+                        <h3>Take Mini-Test</h3>
+                        <p className="text-secondary text-sm">18 questions to reveal it</p>
+                    </button>
+                </div>
+
+                <div className="flex gap-md justify-center mt-xl">
+                    <button className="btn btn-ghost" onClick={() => setStep(6)}>Back</button>
+                    <button
+                        className="btn btn-ghost text-secondary"
+                        onClick={() => { setFormData({ ...formData, enneagramPath: 'skip', enneagram: null }); setStep(9) }}
+                    >
+                        Skip for now
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
+    const EnneagramPathStep = () => {
+        if (formData.enneagramPath === 'know') {
+            return <EnneagramSelectionGrid />
+        } else if (formData.enneagramPath === 'test') {
+            return <EnneagramTest onComplete={(type) => { setFormData({ ...prev => ({ ...prev, enneagram: type }) }); setStep(9) }} />
+        }
+        return null
+    }
+
+    const EnneagramSelectionGrid = () => {
+        const types = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        return (
+            <div className="text-center">
+                <h2 className="mb-md">Select Your Type</h2>
+                <div className="mbti-grid" style={{ maxWidth: '500px', margin: '0 auto' }}>
+                    {types.map(t => (
+                        <button
+                            key={t}
+                            className={`mbti-btn ${formData.enneagram === t ? 'active' : ''}`}
+                            onClick={() => setFormData({ ...formData, enneagram: t })}
+                            style={{ minWidth: '80px' }}
+                        >
+                            <span className="mbti-type">TYPE {t}</span>
+                        </button>
+                    ))}
+                </div>
+                <div className="flex gap-md justify-center mt-xl">
+                    <button className="btn btn-ghost" onClick={() => setStep(7)}>Back</button>
+                    <button className="btn btn-primary" onClick={() => setStep(9)} disabled={!formData.enneagram}>
+                        Continue <ArrowRight size={18} />
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
+    const EnneagramTest = ({ onComplete }) => {
+        const [currentQ, setCurrentQ] = useState(0)
+        const [answers, setAnswers] = useState({})
+
+        const handleAnswer = (val) => {
+            const newAnswers = { ...answers, [enneagramQuestions[currentQ].id]: val }
+            setAnswers(newAnswers)
+
+            if (currentQ < enneagramQuestions.length - 1) {
+                setCurrentQ(currentQ + 1)
+            } else {
+                const result = calculateEnneagram(newAnswers)
+                setFormData(prev => ({ ...prev, enneagram: result, enneagramAnswers: newAnswers }))
+                setStep(9)
+            }
+        }
+
+        const q = enneagramQuestions[currentQ]
+        const progress = ((currentQ + 1) / enneagramQuestions.length) * 100
+
+        return (
+            <div className="text-center">
+                <h2 className="mb-md">Enneagram Test</h2>
+                <div className="mb-xl">
+                    <div className="flex justify-between text-xs mb-xs opacity-50">
+                        <span>Question {currentQ + 1} of {enneagramQuestions.length}</span>
+                        <span>{Math.round(progress)}%</span>
+                    </div>
+                    <div className="dimension-bar">
+                        <motion.div className="dimension-fill" animate={{ width: `${progress}%` }} style={{ background: 'var(--accent-primary)' }} />
+                    </div>
+                </div>
+
+                <div className="glass-card p-xl mb-xl">
+                    <p className="text-lg mb-xl">{q.text}</p>
+                    <div className="flex flex-col gap-sm">
+                        {[
+                            { val: 3, label: 'Strongly Agree', color: '#10b981' },
+                            { val: 1, label: 'Slightly Agree', color: '#34d399' },
+                            { val: 0, label: 'Neutral', color: '#94a3b8' },
+                            { val: -1, label: 'Slightly Disagree', color: '#f87171' },
+                            { val: -3, label: 'Strongly Disagree', color: '#ef4444' },
+                        ].map((btn) => (
+                            <button
+                                key={btn.val}
+                                className="btn btn-ghost w-full"
+                                style={{ borderColor: 'rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}
+                                onClick={() => handleAnswer(btn.val)}
+                            >
+                                {btn.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="flex gap-md justify-center">
+                    <button className="btn btn-ghost" onClick={() => currentQ > 0 ? setCurrentQ(currentQ - 1) : setStep(7)}>Back</button>
+                    <button className="btn btn-ghost" onClick={() => setStep(7)}>Exit Test</button>
                 </div>
             </div>
         )
@@ -534,6 +798,16 @@ export default function Onboarding() {
 
         return (
             <div className="text-center">
+                <div className="avatar-preview mb-lg">
+                    <motion.img
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        src={personality?.avatars?.[formData.gender] || personality?.avatars?.male || '/avatars/placeholder.png'}
+                        alt={personality?.name}
+                        style={{ width: '200px', height: '200px', objectFit: 'contain' }}
+                    />
+                </div>
+
                 <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -545,9 +819,46 @@ export default function Onboarding() {
                 </motion.div>
 
                 <h2 className="mb-sm">{personality?.title}</h2>
-                <p className="text-secondary mb-xl" style={{ maxWidth: '400px', margin: '0 auto' }}>
+                <p className="text-secondary mb-lg" style={{ maxWidth: '400px', margin: '0 auto' }}>
                     {personality?.description}
                 </p>
+
+                {/* Astrology & Identity Badges */}
+                <div className="flex gap-md justify-center mb-xl">
+                    {getWesternZodiac(formData.birthDate) && (
+                        <div className="glass-card p-sm flex items-center gap-sm" title="Western Zodiac">
+                            <span style={{ fontSize: '1.2rem' }}>{getWesternZodiac(formData.birthDate).sign}</span>
+                            <span className="text-xs uppercase tracking-tighter">{getWesternZodiac(formData.birthDate).name}</span>
+                        </div>
+                    )}
+                    {getChineseZodiac(new Date(formData.birthDate).getFullYear()) && (
+                        <div className="glass-card p-sm flex items-center gap-sm" title="Chinese Zodiac">
+                            <span style={{ fontSize: '1.2rem' }}>{getChineseZodiac(new Date(formData.birthDate).getFullYear()).sign}</span>
+                            <span className="text-xs uppercase tracking-tighter">{getChineseZodiac(new Date(formData.birthDate).getFullYear()).name}</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* MBTI Variant Selection */}
+                <div className="variant-selection mb-xl">
+                    <h3 className="text-sm text-secondary mb-md uppercase tracking-wider">Identity Variant</h3>
+                    <div className="flex gap-md justify-center">
+                        <button
+                            className={`px-lg py-sm rounded-md border transition-all ${formData.mbtiVariant === 'A' ? 'bg-accent text-black border-accent' : 'bg-transparent text-secondary border-white/20'}`}
+                            onClick={() => setFormData({ ...formData, mbtiVariant: 'A' })}
+                        >
+                            <span className="font-bold">ASSERTIVE</span>
+                            <span className="text-xs block opacity-70">-{formData.mbti}-A</span>
+                        </button>
+                        <button
+                            className={`px-lg py-sm rounded-md border transition-all ${formData.mbtiVariant === 'T' ? 'bg-accent text-black border-accent' : 'bg-transparent text-secondary border-white/20'}`}
+                            onClick={() => setFormData({ ...formData, mbtiVariant: 'T' })}
+                        >
+                            <span className="font-bold">TURBULENT</span>
+                            <span className="text-xs block opacity-70">-{formData.mbti}-T</span>
+                        </button>
+                    </div>
+                </div>
 
                 {/* Percentage Breakdown */}
                 {formData.mbtiScores && (
@@ -605,13 +916,57 @@ export default function Onboarding() {
         )
     }
 
+    // Spirit Animal Discovery Step
+    const SpiritAnimalStep = () => {
+        const birthMonth = formData.birthDate ? new Date(formData.birthDate).getMonth() : 0
+        const animal = getSpiritAnimal(formData.mbti)
+
+        return (
+            <div className="text-center">
+                <motion.div
+                    initial={{ scale: 0, rotate: -20 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    className="realm-icon mb-xl"
+                    style={{ margin: '0 auto', background: 'var(--realm-sanctum)', width: '100px', height: '100px', fontSize: '3rem' }}
+                >
+                    {animal.symbol}
+                </motion.div>
+                <h2 className="mb-sm">Spirit Animal: {animal.name}</h2>
+                <p className="text-secondary mb-lg uppercase tracking-widest text-xs">{animal.traits.join(' • ')}</p>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="glass-card p-lg mb-xl"
+                >
+                    <p className="text-sm italic opacity-80 leading-relaxed">
+                        "{animal.description}"
+                    </p>
+                </motion.div>
+
+                <div className="flex gap-md justify-center mt-xl">
+                    <button className="btn btn-ghost" onClick={() => setStep(formData.enneagramPath === 'skip' ? 7 : 8)}>Back</button>
+                    <button className="btn btn-primary" onClick={() => setStep(10)}>
+                        Continue <ArrowRight size={18} />
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
     const steps = [
         { component: <WelcomeStep /> },
+        { component: <ModeStep /> },
         { component: <NameStep /> },
         { component: <BirthDateStep /> },
+        { component: <GenderStep /> },
         { component: <MBTIChoiceStep /> },
         { component: <MBTIPathStep /> },
         { component: <ReligionStep /> },
+        { component: <EnneagramChoiceStep /> },
+        { component: <EnneagramPathStep /> },
+        { component: <SpiritAnimalStep /> },
         { component: <ResultsStep /> },
     ]
 
@@ -632,7 +987,7 @@ export default function Onboarding() {
 
             {/* Progress dots */}
             <div className="onboarding-progress">
-                {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => (
                     <div
                         key={i}
                         className={`progress-dot ${i === step ? 'active' : ''} ${i < step ? 'completed' : ''}`}

@@ -79,7 +79,81 @@ export const dimensionExplanations = {
         description: 'Perceivers prefer flexibility, spontaneity, and keeping options open. They adapt well to change and enjoy exploring possibilities. They feel most comfortable when life is open-ended.',
         traits: ['Flexible', 'Spontaneous', 'Adaptable', 'Open-minded', 'Curious'],
         color: '#f97316'
+    },
+    A: {
+        letter: 'A',
+        name: 'Assertive',
+        short: 'Self-assured and resistant to stress',
+        description: 'Assertive individuals are self-assured, even-tempered and resistant to stress. They refuse to worry too much and do not push themselves too hard when it comes to achieving goals.',
+        traits: ['Confident', 'Relaxed', 'Resilient', 'Unfazed'],
+        color: '#10b981'
+    },
+    T: {
+        letter: 'T',
+        name: 'Turbulent',
+        short: 'Self-conscious and sensitive to stress',
+        description: 'Turbulent individuals are self-conscious and sensitive to stress. They are likely to experience a wide range of emotions and to be success-driven, perfectionistic and eager to improve.',
+        traits: ['Driven', 'Perfectionistic', 'Sensitive', 'Self-conscious'],
+        color: '#f43f5e'
     }
+}
+
+// Enneagram Types
+export const enneagramTypes = {
+    1: { name: 'The Reformer', title: 'The Rational, Idealistic Type', traits: ['Principled', 'Purposeful', 'Self-Controlled', 'Perfectionistic'] },
+    2: { name: 'The Helper', title: 'The Caring, Interpersonal Type', traits: ['Demonstrative', 'Generous', 'People-Pleasing', 'Possessive'] },
+    3: { name: 'The Achiever', title: 'The Success-Oriented, Pragmatic Type', traits: ['Adaptive', 'Excelling', 'Driven', 'Image-Conscious'] },
+    4: { name: 'The Individualist', title: 'The Sensitive, Introspective Type', traits: ['Expressive', 'Dramatic', 'Self-Absorbed', 'Temperamental'] },
+    5: { name: 'The Investigator', title: 'The Intense, Cerebral Type', traits: ['Perceptive', 'Innovative', 'Secretive', 'Isolated'] },
+    6: { name: 'The Loyalist', title: 'The Committed, Security-Oriented Type', traits: ['Engaging', 'Responsible', 'Anxious', 'Suspicious'] },
+    7: { name: 'The Enthusiast', title: 'The Busy, Variety-Seeking Type', traits: ['Spontaneous', 'Versatile', 'Acquisitive', 'Scattered'] },
+    8: { name: 'The Challenger', title: 'The Powerful, Dominating Type', traits: ['Self-Confident', 'Decisive', 'Willful', 'Confrontational'] },
+    9: { name: 'The Peacemaker', title: 'The Easygoing, Self-Effacing Type', traits: ['Receptive', 'Reassuring', 'Agreeable', 'Complacent'] },
+}
+
+// Enneagram Assessment: 18 Questions (2 per type)
+export const enneagramQuestions = [
+    { id: 'en1', text: 'I prioritize being right and doing things correctly.', type: 1 },
+    { id: 'en2', text: 'I tend to be self-critical and have high standards.', type: 1 },
+    { id: 'en3', text: 'I find it easy to know what others need and feel.', type: 2 },
+    { id: 'en4', text: 'I often put others\' needs before my own to feel loved.', type: 2 },
+    { id: 'en5', text: 'I am very focused on achieving goals and being successful.', type: 3 },
+    { id: 'en6', text: 'I care a lot about how others perceive my success.', type: 3 },
+    { id: 'en7', text: 'I often feel that I am different from everyone else.', type: 4 },
+    { id: 'en8', text: 'I am drawn to deep, complex emotions and authenticity.', type: 4 },
+    { id: 'en9', text: 'I prefer to observe and analyze before getting involved.', type: 5 },
+    { id: 'en10', text: 'I value my independence and private energy.', type: 5 },
+    { id: 'en11', text: 'I am always thinking about potential risks and security.', type: 6 },
+    { id: 'en12', text: 'I value loyalty and being part of a trusted group.', type: 6 },
+    { id: 'en13', text: 'I am always looking for the next exciting experience.', type: 7 },
+    { id: 'en14', text: 'I avoid pain and boredom at all costs.', type: 7 },
+    { id: 'en15', text: 'I am not afraid of conflict and like to take charge.', type: 8 },
+    { id: 'en16', text: 'I value strength and directness in myself and others.', type: 8 },
+    { id: 'en17', text: 'I avoid conflict and try to keep things peaceful.', type: 9 },
+    { id: 'en18', text: 'I find it easy to go along with what others want.', type: 9 },
+]
+
+// Calculate Enneagram from answers
+export const calculateEnneagram = (answers) => {
+    const scores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 }
+
+    enneagramQuestions.forEach(q => {
+        const answer = answers[q.id] || 0
+        scores[q.type] += answer
+    })
+
+    // Find the type with the highest score
+    let topType = 1
+    let maxScore = -Infinity
+
+    Object.entries(scores).forEach(([type, score]) => {
+        if (score > maxScore) {
+            maxScore = score
+            topType = Number(type)
+        }
+    })
+
+    return topType
 }
 
 // Basic Assessment: 20 Questions (5 per dimension)
@@ -204,6 +278,10 @@ export const personalityTypes = {
         strengths: ['Long-term planning', 'Systems thinking', 'Problem-solving', 'Research', 'Self-improvement'],
         weaknesses: ['Overly critical', 'Dismissive of emotions', 'Impatient'],
         skills: ['Strategic Planning', 'Systems Design', 'Research', 'Data Analysis', 'Critical Thinking', 'Writing', 'Project Management', 'Programming'],
+        avatars: {
+            male: '/avatars/male/INTJ.png',
+            female: '/avatars/female/INTJ.png'
+        }
     },
     INTP: {
         name: 'Logician',
@@ -213,6 +291,10 @@ export const personalityTypes = {
         strengths: ['Logical thinking', 'Pattern recognition', 'Problem-solving', 'Learning', 'Innovation'],
         weaknesses: ['Insensitive', 'Absent-minded', 'Condescending'],
         skills: ['Logic', 'Programming', 'Philosophy', 'Mathematics', 'Scientific Method', 'Analysis', 'Innovation', 'Abstract Thinking'],
+        avatars: {
+            male: '/avatars/male/INTP.png',
+            female: '/avatars/female/INTP.png'
+        }
     },
     ENTJ: {
         name: 'Commander',
@@ -222,6 +304,10 @@ export const personalityTypes = {
         strengths: ['Leadership', 'Strategic planning', 'Decision-making', 'Efficiency', 'Confidence'],
         weaknesses: ['Impatient', 'Arrogant', 'Cold'],
         skills: ['Leadership', 'Public Speaking', 'Decision Making', 'Project Management', 'Debate', 'Negotiation', 'Strategy', 'Business'],
+        avatars: {
+            male: '/avatars/male/ENTJ.png',
+            female: '/avatars/female/ENTJ.png'
+        }
     },
     ENTP: {
         name: 'Debater',
@@ -231,6 +317,10 @@ export const personalityTypes = {
         strengths: ['Brainstorming', 'Debate', 'Adapting', 'Innovation', 'Networking'],
         weaknesses: ['Argumentative', 'Insensitive', 'Unfocused'],
         skills: ['Debate', 'Innovation', 'Brainstorming', 'Entrepreneurship', 'Networking', 'Problem Solving', 'Communication', 'Improvisation'],
+        avatars: {
+            male: '/avatars/male/ENTP.png',
+            female: '/avatars/female/ENTP.png'
+        }
     },
     INFJ: {
         name: 'Advocate',
@@ -240,6 +330,10 @@ export const personalityTypes = {
         strengths: ['Understanding others', 'Counseling', 'Writing', 'Vision', 'Dedication'],
         weaknesses: ['Perfectionistic', 'Avoidant', 'Burnout-prone'],
         skills: ['Counseling', 'Writing', 'Psychology', 'Empathy', 'Vision', 'Creativity', 'Teaching', 'Healing'],
+        avatars: {
+            male: '/avatars/male/INFJ.png',
+            female: '/avatars/female/INFJ.png'
+        }
     },
     INFP: {
         name: 'Mediator',
@@ -249,6 +343,10 @@ export const personalityTypes = {
         strengths: ['Creativity', 'Empathy', 'Writing', 'Understanding values', 'Authenticity'],
         weaknesses: ['Impractical', 'Self-isolating', 'Overly idealistic'],
         skills: ['Creative Writing', 'Empathy', 'Art', 'Music', 'Poetry', 'Counseling', 'Imagination', 'Self-expression'],
+        avatars: {
+            male: '/avatars/male/INFP.png',
+            female: '/avatars/female/INFP.png'
+        }
     },
     ENFJ: {
         name: 'Protagonist',
@@ -258,6 +356,10 @@ export const personalityTypes = {
         strengths: ['Leadership', 'Teaching', 'Inspiring', 'Organizing', 'Communication'],
         weaknesses: ['Overly idealistic', 'Too selfless', 'Sensitive to criticism'],
         skills: ['Leadership', 'Teaching', 'Public Speaking', 'Coaching', 'Diplomacy', 'Team Building', 'Mentoring', 'Communication'],
+        avatars: {
+            male: '/avatars/male/ENFJ.png',
+            female: '/avatars/female/ENFJ.png'
+        }
     },
     ENFP: {
         name: 'Campaigner',
@@ -267,6 +369,10 @@ export const personalityTypes = {
         strengths: ['Creativity', 'Connecting with others', 'Enthusiasm', 'Flexibility', 'Communication'],
         weaknesses: ['Unfocused', 'Disorganized', 'Overly accommodating'],
         skills: ['Creativity', 'Networking', 'Brainstorming', 'Communication', 'Inspiration', 'Storytelling', 'Improvisation', 'Art'],
+        avatars: {
+            male: '/avatars/male/ENFP.png',
+            female: '/avatars/female/ENFP.png'
+        }
     },
     ISTJ: {
         name: 'Logistician',
@@ -276,6 +382,10 @@ export const personalityTypes = {
         strengths: ['Organization', 'Reliability', 'Attention to detail', 'Dedication', 'Integrity'],
         weaknesses: ['Stubborn', 'Insensitive', 'Rigid'],
         skills: ['Organization', 'Administration', 'Data Management', 'Accounting', 'Quality Control', 'Documentation', 'Process Improvement', 'Logistics'],
+        avatars: {
+            male: '/avatars/male/ISTJ.png',
+            female: '/avatars/female/ISTJ.png'
+        }
     },
     ISFJ: {
         name: 'Defender',
@@ -285,6 +395,10 @@ export const personalityTypes = {
         strengths: ['Supporting others', 'Reliability', 'Patience', 'Memory for details', 'Practical help'],
         weaknesses: ['Reluctant to change', 'Overload themselves', 'Shy'],
         skills: ['Caregiving', 'Organization', 'Support', 'Healthcare', 'Teaching', 'Cooking', 'Hospitality', 'Administration'],
+        avatars: {
+            male: '/avatars/male/ISFJ.png',
+            female: '/avatars/female/ISFJ.png'
+        }
     },
     ESTJ: {
         name: 'Executive',
@@ -294,6 +408,10 @@ export const personalityTypes = {
         strengths: ['Managing', 'Organizing', 'Creating order', 'Leadership', 'Dedication'],
         weaknesses: ['Inflexible', 'Judgmental', 'Too focused on status'],
         skills: ['Management', 'Organization', 'Leadership', 'Administration', 'Decision Making', 'Delegation', 'Operations', 'Efficiency'],
+        avatars: {
+            male: '/avatars/male/ESTJ.png',
+            female: '/avatars/female/ESTJ.png'
+        }
     },
     ESFJ: {
         name: 'Consul',
@@ -303,6 +421,10 @@ export const personalityTypes = {
         strengths: ['Caring for others', 'Organizing events', 'Building community', 'Loyalty', 'Practical support'],
         weaknesses: ['Needy', 'Too selfless', 'Sensitive to criticism'],
         skills: ['Event Planning', 'Community Building', 'Hospitality', 'Customer Service', 'Teaching', 'Healthcare', 'Communication', 'Team Coordination'],
+        avatars: {
+            male: '/avatars/male/ESFJ.png',
+            female: '/avatars/female/ESFJ.png'
+        }
     },
     ISTP: {
         name: 'Virtuoso',
@@ -312,6 +434,10 @@ export const personalityTypes = {
         strengths: ['Troubleshooting', 'Hands-on work', 'Staying calm', 'Logic', 'Efficiency'],
         weaknesses: ['Insensitive', 'Risky behavior', 'Private'],
         skills: ['Mechanics', 'Engineering', 'Troubleshooting', 'Craftsmanship', 'Sports', 'Driving', 'Problem Solving', 'Tool Mastery'],
+        avatars: {
+            male: '/avatars/male/ISTP.png',
+            female: '/avatars/female/ISTP.png'
+        }
     },
     ISFP: {
         name: 'Adventurer',
@@ -321,6 +447,10 @@ export const personalityTypes = {
         strengths: ['Artistic expression', 'Sensitivity', 'Hands-on creativity', 'Adaptability', 'Living in the moment'],
         weaknesses: ['Fiercely independent', 'Unpredictable', 'Easily stressed'],
         skills: ['Art', 'Music', 'Design', 'Photography', 'Fashion', 'Nature', 'Cooking', 'Crafts'],
+        avatars: {
+            male: '/avatars/male/ISFP.png',
+            female: '/avatars/female/ISFP.png'
+        }
     },
     ESTP: {
         name: 'Entrepreneur',
@@ -330,6 +460,10 @@ export const personalityTypes = {
         strengths: ['Taking action', 'Reading people', 'Quick thinking', 'Risk-taking', 'Networking'],
         weaknesses: ['Impatient', 'Risk-prone', 'Unstructured'],
         skills: ['Sales', 'Negotiation', 'Sports', 'Crisis Management', 'Entrepreneurship', 'Performance', 'Marketing', 'Leadership'],
+        avatars: {
+            male: '/avatars/male/ESTP.png',
+            female: '/avatars/female/ESTP.png'
+        }
     },
     ESFP: {
         name: 'Entertainer',
@@ -339,6 +473,10 @@ export const personalityTypes = {
         strengths: ['Entertaining', 'Enjoying life', 'Practical help', 'Social skills', 'Adapting'],
         weaknesses: ['Easily bored', 'Poor long-term planning', 'Unfocused'],
         skills: ['Performance', 'Entertainment', 'Social Skills', 'Event Hosting', 'Sales', 'Fashion', 'Sports', 'Hospitality'],
+        avatars: {
+            male: '/avatars/male/ESFP.png',
+            female: '/avatars/female/ESFP.png'
+        }
     },
 }
 

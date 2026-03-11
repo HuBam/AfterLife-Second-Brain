@@ -5,7 +5,7 @@ import { useStore } from '../store/useStore'
 import { ArrowLeft, Plus, Heart, Users, Smile, MessageCircle } from 'lucide-react'
 
 export default function Empyra() {
-    const { realms, addRealmEntry, updateRealmBalance } = useStore()
+    const { realms, addRealmEntry } = useStore()
     const realm = realms.empyra
     const [showAddEntry, setShowAddEntry] = useState(false)
     const [newEntry, setNewEntry] = useState({ title: '', content: '', type: 'mood' })
@@ -13,7 +13,6 @@ export default function Empyra() {
     const handleAddEntry = () => {
         if (newEntry.title.trim()) {
             addRealmEntry('empyra', newEntry)
-            updateRealmBalance('empyra', Math.min(100, realm.balance + 5))
             setNewEntry({ title: '', content: '', type: 'mood' })
             setShowAddEntry(false)
         }

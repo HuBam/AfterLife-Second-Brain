@@ -11,6 +11,8 @@ const initialUser = {
     mbtiScores: null, // { E: 70, I: 30, S: 40, N: 60, ... }
     mode: 'basic', // 'basic' or 'advanced'
     theme: 'cyber', // Theme color scheme
+    font: 'default', // 'default', 'fantasy', 'pixel', 'stray', 'minimal'
+    gender: null, // 'male', 'female', 'non-binary', 'skip'
     questionAnswers: {}, // Answers to achievement questions
     habits: [], // Habit tracking data
     createdAt: null,
@@ -55,6 +57,27 @@ const initialUser = {
         showCommunityStats: false,
         anonymousCommunityStats: true,
     },
+
+    // Identity & Personality Expansion
+    mbtiVariant: null, // 'A' (Assertive) or 'T' (Turbulent)
+    enneagram: null, // 1-9
+    spiritAnimal: null,
+    quotientsHistory: {
+        iq: [], // Array of { value, timestamp }
+        eq: [],
+        aq: [],
+        tq: [],
+        sq: [],
+    },
+    westernZodiac: null,
+    chineseZodiac: null,
+
+    // Prayer Times API Data
+    prayerTimesData: null, // { timings: {...}, date: {...}, meta: {...} }
+    qiblaDirection: null, // Degrees from North
+    userLocation: null, // { city, country, latitude, longitude, calculationMethod }
+    prayerTimesLoading: false,
+    prayerTimesError: null,
 }
 
 // Initial realm data
@@ -229,6 +252,39 @@ export const useStore = create(
                 }
             })),
 
+            setFont: (font) => set((state) => ({
+                user: { ...state.user, font }
+            })),
+
+            setGender: (gender) => set((state) => ({
+                user: { ...state.user, gender }
+            })),
+
+            setMBTIVariant: (variant) => set((state) => ({
+                user: { ...state.user, mbtiVariant: variant }
+            })),
+
+            setEnneagram: (type) => set((state) => ({
+                user: { ...state.user, enneagram: type }
+            })),
+
+            setSpiritAnimal: (animal) => set((state) => ({
+                user: { ...state.user, spiritAnimal: animal }
+            })),
+
+            logQuotient: (type, value) => set((state) => ({
+                user: {
+                    ...state.user,
+                    quotientsHistory: {
+                        ...state.user.quotientsHistory,
+                        [type]: [
+                            ...state.user.quotientsHistory[type],
+                            { value, timestamp: new Date().toISOString() }
+                        ]
+                    }
+                }
+            })),
+
             // Actions - Religion & Spirituality
             setReligion: (religion, customReligion = '') => set((state) => ({
                 user: {
@@ -318,6 +374,46 @@ export const useStore = create(
                     },
                 }
             })),
+
+            // Actions - Prayer Times API
+            setPrayerTimesData: (data) => set((state) => ({
+                user: {
+                    ...state.user,
+                    prayerTimesData: data,
+                    prayerTimesLoading: false,
+                    prayerTimesError: null,
+                }
+            })),
+
+            setQiblaDirection: (direction) => set((state) => ({
+                user: {
+                    ...state.user,
+                    qiblaDirection: direction,
+                }
+            })),
+
+            setUserLocation: (location) => set((state) => ({
+                user: {
+                    ...state.user,
+                    userLocation: location,
+                }
+            })),
+
+            setPrayerTimesLoading: (loading) => set((state) => ({
+                user: {
+                    ...state.user,
+                    prayerTimesLoading: loading,
+                }
+            })),
+
+            setPrayerTimesError: (error) => set((state) => ({
+                user: {
+                    ...state.user,
+                    prayerTimesError: error,
+                    prayerTimesLoading: false,
+                }
+            })),
+
             updateRealmBalance: (realmKey, balance) => set((state) => ({
                 realms: {
                     ...state.realms,
@@ -350,11 +446,20 @@ export const useStore = create(
                     enhancedEntry.rarity = 'Common' // default
                 }
 
+                // Dynamic Balance Engine: auto-calculate balance boost
+                const currentRealm = state.realms[realmKey]
+                const entryCount = currentRealm.entries.length + 1 // +1 for the new one
+                const weight = get().getEntryWeight(entry.type)
+                // Logarithmic diminishing returns: big boost early, smaller later
+                const boost = weight * (1 / Math.log2(entryCount + 2)) * 10
+                const newBalance = Math.min(100, currentRealm.balance + boost)
+
                 return {
                     realms: {
                         ...state.realms,
                         [realmKey]: {
                             ...state.realms[realmKey],
+                            balance: Math.round(newBalance * 10) / 10,
                             entries: [
                                 {
                                     id: Date.now(),
@@ -497,8 +602,78 @@ export const useStore = create(
                     }
                 })
 
+                // 3. Habit Completions
+                const state2 = get()
+                const isAdvanced = state2.user?.mode === 'advanced'
+                    ; (state2.user?.habits || []).forEach(habit => {
+                        ; (habit.completions || []).forEach(dateStr => {
+                            allEntries.push({
+                                id: `habit-${habit.id}-${dateStr}`,
+                                source: 'habit',
+                                realm: 'habits',
+                                title: isAdvanced
+                                    ? `⚡ ${habit.name} — +XP`
+                                    : habit.name,
+                                description: isAdvanced
+                                    ? `Habit completed · Discipline streak active`
+                                    : 'Habit completed',
+                                color: '#f59e0b',
+                                icon: isAdvanced ? '🏆' : '🔥',
+                                xp: isAdvanced ? 50 : null,
+                                createdAt: new Date(dateStr).toISOString(),
+                            })
+                        })
+                    })
+
+                    // 4. Prayer Logs → Sanctum
+                    ; (state2.user?.prayerLog || []).forEach(prayer => {
+                        allEntries.push({
+                            ...prayer,
+                            id: prayer.id || `prayer-${prayer.completedAt}`,
+                            source: 'prayer',
+                            realm: 'sanctum',
+                            title: `🌙 ${prayer.type || 'Prayer'} logged`,
+                            description: prayer.notes || 'Spiritual practice recorded',
+                            color: '#a855f7',
+                            icon: '🌙',
+                            createdAt: prayer.completedAt || prayer.createdAt,
+                        })
+                    })
+
                 // Sort by Date (Newest First)
                 return allEntries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            },
+
+            // Phase 3: Dynamic Life Expectancy
+            getLifeExpectancy: () => {
+                const state = get()
+                const user = state.user
+                const health = state.health
+                let base = 80
+
+                // Health symptoms → reduce expectancy
+                let symptomCount = 0
+                Object.values(health || {}).forEach(organ => {
+                    symptomCount += (organ.symptoms || []).length
+                })
+                base -= symptomCount * 0.5
+
+                // Habit consistency → increase expectancy
+                const habits = user?.habits || []
+                const activeHabits = habits.filter(h => (h.completions || []).length > 0)
+                base += activeHabits.length * 0.2
+
+                // Mood entries (Empyra) → adjust based on volume (positive indicator)
+                const empyraEntries = state.realms?.empyra?.entries || []
+                const moodEntries = empyraEntries.filter(e => e.type === 'mood')
+                if (moodEntries.length > 10) base += 0.5
+                else if (moodEntries.length > 5) base += 0.25
+
+                // Spiritual practice bonus
+                const prayerCount = (user?.prayerLog || []).length
+                if (prayerCount > 5) base += 0.5
+
+                return Math.max(40, Math.min(120, Math.round(base * 10) / 10))
             },
 
             // Phase 2: Entry Weight System
@@ -650,6 +825,74 @@ export const useStore = create(
                 return suggestions
             },
 
+            // Phase 2: Echo Understanding % — scores all app data across 6 categories
+            getEchoUnderstanding: () => {
+                const state = get()
+                const { user, realms, health } = state
+                let score = 0
+                const breakdown = {}
+
+                // 1. Realm entries (25 pts max — 5pts per realm, 0.5pt per entry, cap 10 entries)
+                let realmPts = 0
+                Object.values(realms).forEach(realm => {
+                    const entries = Math.min(realm.entries.length, 10)
+                    realmPts += entries * 0.5
+                })
+                realmPts = Math.min(25, realmPts)
+                breakdown.realms = { score: Math.round(realmPts * 10) / 10, max: 25 }
+                score += realmPts
+
+                // 2. Habits (15 pts max — 3pts per habit, cap 5)
+                const habits = user.habits || []
+                const habitPts = Math.min(15, habits.length * 3)
+                breakdown.habits = { score: habitPts, max: 15 }
+                score += habitPts
+
+                // 3. Health records (15 pts max — 1pt per symptom or record across all organs, cap 15)
+                let healthPts = 0
+                Object.values(health).forEach(organ => {
+                    healthPts += (organ.symptoms?.length || 0) + (organ.records?.length || 0)
+                })
+                healthPts = Math.min(15, healthPts)
+                breakdown.health = { score: healthPts, max: 15 }
+                score += healthPts
+
+                // 4. Religion logs (15 pts max)
+                let religionPts = 0
+                if (user.religion) religionPts += 3 // has a religion set
+                religionPts += Math.min(6, (user.prayerLog?.length || 0) * 0.5) // prayer logs
+                const quran = user.scriptureProgress?.quran
+                if (quran) {
+                    if (quran.currentJuz > 0 || quran.currentPage > 0) religionPts += 3
+                    if (quran.khatmCount > 0) religionPts += 3
+                }
+                religionPts = Math.min(15, religionPts)
+                breakdown.religion = { score: Math.round(religionPts * 10) / 10, max: 15 }
+                score += religionPts
+
+                // 5. MBTI + Quotients (15 pts max)
+                let mbtiPts = 0
+                if (user.mbti) mbtiPts += 5
+                if (user.mbtiScores) mbtiPts += 2
+                const quotients = user.quotientsHistory || {}
+                const quotientLogs = Object.values(quotients).reduce((sum, arr) => sum + (arr?.length || 0), 0)
+                mbtiPts += Math.min(8, quotientLogs * 2)
+                mbtiPts = Math.min(15, mbtiPts)
+                breakdown.personality = { score: mbtiPts, max: 15 }
+                score += mbtiPts
+
+                // 6. Achievements (15 pts max — 1pt per answered question, cap 15)
+                const answeredQuestions = Object.keys(user.questionAnswers || {}).length
+                const achievementPts = Math.min(15, answeredQuestions)
+                breakdown.achievements = { score: achievementPts, max: 15 }
+                score += achievementPts
+
+                return {
+                    score: Math.min(100, Math.round(score)),
+                    breakdown
+                }
+            },
+
             // Phase 5: Update skill hours (for XP logging)
             updateSkillHours: (skillId, additionalHours) => set((state) => ({
                 realms: {
@@ -695,44 +938,23 @@ export const useStore = create(
         }),
         {
             name: 'afterlife-storage',
-            version: 3, // Bumped version for religion feature migration
+            version: 4, // Bumped version for identity expansion migration
             migrate: (persistedState, version) => {
-                console.log(`Zustand: Migrating storage from version ${version} to 3`)
+                console.log(`Zustand: Migrating storage from version ${version} to 4`)
 
                 if (!persistedState) return persistedState
 
                 // Migration for religion feature (version 2 -> 3)
                 if (version < 3 && persistedState?.user) {
-                    // Ensure religion fields exist
                     persistedState.user = {
                         ...persistedState.user,
                         religion: persistedState.user.religion ?? null,
                         customReligion: persistedState.user.customReligion ?? '',
                         prayerLog: persistedState.user.prayerLog ?? [],
                         scriptureProgress: persistedState.user.scriptureProgress ?? {
-                            quran: {
-                                mode: 'juz',
-                                currentPage: 0,
-                                currentJuz: 0,
-                                completedSurahs: [],
-                                khatmCount: 0,
-                                lastRead: null,
-                                goal: null,
-                                streak: 0,
-                            },
-                            bible: {
-                                completedChapters: [],
-                                currentBook: null,
-                                lastRead: null,
-                                goal: null,
-                                streak: 0,
-                            },
-                            torah: {
-                                currentParsha: null,
-                                completedParshas: [],
-                                lastRead: null,
-                                streak: 0,
-                            }
+                            quran: { mode: 'juz', currentPage: 0, currentJuz: 0, completedSurahs: [], khatmCount: 0, lastRead: null, goal: null, streak: 0 },
+                            bible: { completedChapters: [], currentBook: null, lastRead: null, goal: null, streak: 0 },
+                            torah: { currentParsha: null, completedParshas: [], lastRead: null, streak: 0 }
                         },
                         spiritualSettings: persistedState.user.spiritualSettings ?? {
                             showReligionWidget: true,
@@ -742,6 +964,22 @@ export const useStore = create(
                         },
                     }
                 }
+
+                // Migration for identity expansion (version 3 -> 4)
+                if (version < 4 && persistedState?.user) {
+                    persistedState.user = {
+                        ...persistedState.user,
+                        mbtiVariant: persistedState.user.mbtiVariant ?? 'A',
+                        enneagram: persistedState.user.enneagram ?? null,
+                        spiritAnimal: persistedState.user.spiritAnimal ?? null,
+                        westernZodiac: persistedState.user.westernZodiac ?? null,
+                        chineseZodiac: persistedState.user.chineseZodiac ?? null,
+                        quotientsHistory: persistedState.user.quotientsHistory ?? {
+                            iq: [], eq: [], aq: [], tq: [], sq: [],
+                        },
+                    }
+                }
+
                 return persistedState
             },
             onRehydrateStorage: () => (state, error) => {

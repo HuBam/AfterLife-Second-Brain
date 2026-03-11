@@ -4,7 +4,12 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { useStore } from '../store/useStore'
 import { ArrowLeft, Activity, Plus, AlertCircle, Crosshair, Zap, Cpu, Search, Eye } from 'lucide-react'
-import Skeleton3D from '../components/Skeleton3D'
+// Temporarily commented out - testing if Three.js is causing crash
+// import Skeleton3D from '../components/Skeleton3D'
+const Skeleton3D = () => <div style={{ color: '#4a9eff', textAlign: 'center', padding: '40px' }}>3D Skeleton Disabled for Testing</div>
+import { personalityTypes } from '../data/mbtiData'
+import { spiritAnimals } from '../data/spiritAnimalData'
+import { talents, checkTalentUnlock } from '../data/achievementsData'
 
 
 
@@ -135,9 +140,18 @@ export default function Avatar() {
         <div className="hud-container">
           <div className="hud-branding">
             <Link to="/" className="hud-back-icon"><ArrowLeft size={20} /></Link>
+            {user.mbti && (
+              <div className="hud-avatar-thumb">
+                <img
+                  src={personalityTypes[user.mbti]?.avatars?.[user.gender] || '/avatars/placeholder.png'}
+                  alt={user.mbti}
+                  style={{ width: '40px', height: '40px', objectFit: 'contain', border: '1px solid var(--accent)', padding: '2px' }}
+                />
+              </div>
+            )}
             <div className="hud-title-wrap">
               <span className="hud-id-label">NEURAL_ID:</span>
-              <span className="hud-id-value">{user.name.toUpperCase()} // LVL_04</span>
+              <span className="hud-id-value">{user.name.toUpperCase()} // {user.mbti}{user.mbtiVariant ? `-${user.mbtiVariant}` : ''}</span>
             </div>
           </div>
           <div className="hud-meta-stats">
@@ -168,7 +182,7 @@ export default function Avatar() {
                   <span className="idx">0{i + 1}</span>
                   <span className="name">{key.toUpperCase()}</span>
                   <div className="hud-progress-mini">
-                    <div className="bar" style={{ width: `${health[key].symptoms.length > 0 ? 40 : 100}%` }} />
+                    <div className="bar" style={{ width: `${health[key]?.symptoms?.length > 0 ? 40 : 100}%` }} />
                   </div>
                   {selectedOrgan === key && <motion.div layoutId="hud-cursor" className="hud-cursor" />}
                 </button>
@@ -190,6 +204,63 @@ export default function Avatar() {
               <div className="metric-box">
                 <span className="label">LOAD</span>
                 <span className="value text-orange">34%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="hud-section">
+            <div className="hud-section-header">PERSONALITY_MATRIX</div>
+            <div className="glass-card p-md" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div className="flex justify-between items-center mb-sm">
+                <span className="text-xs opacity-50 font-mono">ENNEAGRAM:</span>
+                <span className="text-xs font-bold text-accent">{user.enneagram ? `TYPE ${user.enneagram}` : 'PENDING...'}</span>
+              </div>
+              <div className="flex items-center gap-md mb-sm">
+                <div className="flex-1">
+                  <span className="text-xs opacity-50 font-mono block">SPIRIT_ANIMAL:</span>
+                  <span className="text-xs font-bold text-accent uppercase">{user.spiritAnimal || 'UNDISCOVERED'}</span>
+                </div>
+                <div className="text-2xl opacity-80">
+                  {spiritAnimals.find(a => a.name === user.spiritAnimal)?.symbol || '🐾'}
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs opacity-50 font-mono">VARIANT:</span>
+                <span className="text-xs font-bold text-accent">{user.mbtiVariant === 'A' ? 'ASSERTIVE' : user.mbtiVariant === 'T' ? 'TURBULENT' : 'UNKNOWN'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="hud-section">
+            <div className="hud-section-header">COSMIC_ALIGNMENT</div>
+            <div className="flex gap-md">
+              <div className="glass-card flex-1 p-xs text-center" style={{ border: '1px solid rgba(255,255,255,0.05)' }} title="Western Sign">
+                <span style={{ fontSize: '1.5rem', display: 'block' }}>{user.westernZodiac?.sign || '—'}</span>
+                <span className="text-[10px] opacity-40 uppercase tracking-widest">{user.westernZodiac?.name || 'ZODIAC'}</span>
+              </div>
+              <div className="glass-card flex-1 p-xs text-center" style={{ border: '1px solid rgba(255,255,255,0.05)' }} title="Chinese Sign">
+                <span style={{ fontSize: '1.5rem', display: 'block' }}>{user.chineseZodiac?.sign || '—'}</span>
+                <span className="text-[10px] opacity-40 uppercase tracking-widest">{user.chineseZodiac?.name || 'CHINESE'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="hud-section">
+            <div className="hud-section-header">TALENT_DISCOVERY</div>
+            <div className="glass-card p-sm" style={{ border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div className="flex flex-wrap gap-xs">
+                {talents.map(talent => {
+                  const isUnlocked = checkTalentUnlock(talent, { user, realms, skills: user.skills })
+                  return (
+                    <div
+                      key={talent.id}
+                      className={`px-xs py-[2px] rounded text-[10px] font-mono border transition-all ${isUnlocked ? 'border-accent/40 bg-accent/10 text-accent' : 'border-white/5 opacity-30 text-white'}`}
+                      title={isUnlocked ? talent.description : 'Locked'}
+                    >
+                      {talent.icon} {talent.name.toUpperCase()}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -311,7 +382,7 @@ export default function Avatar() {
                     <button className="p-add-btn" onClick={() => setShowAddSymptom(true)}>+</button>
                   </div>
                   <div className="p-logs">
-                    {currentOrgan.symptoms.length === 0 ? (
+                    {(currentOrgan?.symptoms?.length || 0) === 0 ? (
                       <div className="p-empty">WAITING FOR DATA INPUT...</div>
                     ) : (
                       currentOrgan.symptoms.map(s => (

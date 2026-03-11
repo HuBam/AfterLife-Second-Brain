@@ -1,26 +1,121 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Info, X } from 'lucide-react'
+import { Check, Info, X, MapPin, Loader2, RefreshCw } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { getPrayerTypes, sunnahPractices } from '../data/religionData'
 import { getRandomQuote } from '../data/religiousQuotes'
+import {
+    fetchPrayerTimesByCity,
+    fetchPrayerTimesByCoords,
+    getCurrentLocation,
+    getNextPrayer
+} from '../services/aladhanApi'
 
 /**
  * Prayer Tracker Component
  * Tracks daily prayers based on user's religion
- * Shows motivational quote on prayer completion
+ * Now integrates with Aladhan API for live prayer times
  */
 export default function PrayerTracker() {
-    const { user, logPrayer } = useStore()
+    const {
+        user,
+        logPrayer,
+        setPrayerTimesData,
+        setUserLocation,
+        setPrayerTimesLoading,
+        setPrayerTimesError
+    } = useStore()
+
     const [showQuote, setShowQuote] = useState(false)
     const [currentQuote, setCurrentQuote] = useState(null)
     const [todayPrayers, setTodayPrayers] = useState([])
+    const [nextPrayer, setNextPrayer] = useState(null)
+    const [isRefreshing, setIsRefreshing] = useState(false)
 
     // Get today's date string for filtering
     const today = new Date().toISOString().split('T')[0]
 
-    // Get prayer types for user's religion
-    const prayerTypes = getPrayerTypes(user?.religion)
+    // Get prayer types for user's religion (fallback if API fails)
+    const staticPrayerTypes = getPrayerTypes(user?.religion)
+
+    // Use API data if available, otherwise fall back to static types
+    const prayerTimings = user?.prayerTimesData?.timings
+    const prayerTypes = prayerTimings
+        ? [
+            { id: 'fajr', name: 'Fajr', nameAr: 'الفجر', time: prayerTimings.fajr },
+            { id: 'dhuhr', name: 'Dhuhr', nameAr: 'الظهر', time: prayerTimings.dhuhr },
+            { id: 'asr', name: 'Asr', nameAr: 'العصر', time: prayerTimings.asr },
+            { id: 'maghrib', name: 'Maghrib', nameAr: 'المغرب', time: prayerTimings.maghrib },
+            { id: 'isha', name: 'Isha', nameAr: 'العشاء', time: prayerTimings.isha },
+        ]
+        : staticPrayerTypes
+
+    // Fetch prayer times on mount or when location changes
+    useEffect(() => {
+        if (user?.religion === 'islam' && !user?.prayerTimesData) {
+            fetchPrayerTimesData()
+        }
+    }, [user?.religion, user?.userLocation])
+
+    // Update next prayer indicator every minute
+    useEffect(() => {
+        if (prayerTimings) {
+            const updateNext = () => setNextPrayer(getNextPrayer(prayerTimings))
+            updateNext()
+            const interval = setInterval(updateNext, 60000)
+            return () => clearInterval(interval)
+        }
+    }, [prayerTimings])
+
+    // Fetch prayer times from API
+    const fetchPrayerTimesData = async () => {
+        setPrayerTimesLoading(true)
+        setIsRefreshing(true)
+
+        try {
+            let result
+
+            // Try to use saved location first
+            if (user?.userLocation?.city && user?.userLocation?.country) {
+                result = await fetchPrayerTimesByCity(
+                    user.userLocation.city,
+                    user.userLocation.country,
+                    user.userLocation.calculationMethod || 4
+                )
+            } else {
+                // Fall back to geolocation
+                try {
+                    const coords = await getCurrentLocation()
+                    result = await fetchPrayerTimesByCoords(
+                        coords.latitude,
+                        coords.longitude,
+                        4 // Default: Umm Al-Qura
+                    )
+                    // Save coords for future use
+                    setUserLocation({
+                        latitude: coords.latitude,
+                        longitude: coords.longitude,
+                        city: result.meta?.timezone?.split('/')[1] || 'Unknown',
+                        country: result.meta?.timezone?.split('/')[0] || 'Unknown',
+                    })
+                } catch (geoError) {
+                    // Default to Makkah if geolocation fails
+                    result = await fetchPrayerTimesByCity('Makkah', 'Saudi Arabia', 4)
+                    setUserLocation({ city: 'Makkah', country: 'Saudi Arabia' })
+                }
+            }
+
+            if (result.success) {
+                setPrayerTimesData(result)
+            } else {
+                setPrayerTimesError(result.error)
+            }
+        } catch (error) {
+            setPrayerTimesError(error.message)
+        } finally {
+            setIsRefreshing(false)
+        }
+    }
 
     // Calculate today's completed prayers
     useEffect(() => {
@@ -62,29 +157,59 @@ export default function PrayerTracker() {
 
     return (
         <div className="prayer-tracker">
-            {/* Header with progress */}
+            {/* Header with location and progress */}
             <div className="prayer-header">
-                <h3>Daily Prayers</h3>
-                <div className="prayer-progress-mini">
-                    <span>{completedCount}/{totalCount}</span>
-                    <div className="progress-bar-mini">
-                        <motion.div
-                            className="progress-fill-mini"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${progressPercent}%` }}
-                        />
+                <div className="prayer-title-row">
+                    <h3>Daily Prayers</h3>
+                    {user?.userLocation?.city && (
+                        <div className="prayer-location">
+                            <MapPin size={12} />
+                            <span>{user.userLocation.city}</span>
+                        </div>
+                    )}
+                </div>
+                <div className="prayer-actions">
+                    <button
+                        className="prayer-refresh-btn"
+                        onClick={fetchPrayerTimesData}
+                        disabled={isRefreshing}
+                        title="Refresh prayer times"
+                    >
+                        {isRefreshing ? <Loader2 size={14} className="spin" /> : <RefreshCw size={14} />}
+                    </button>
+                    <div className="prayer-progress-mini">
+                        <span>{completedCount}/{totalCount}</span>
+                        <div className="progress-bar-mini">
+                            <motion.div
+                                className="progress-fill-mini"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${progressPercent}%` }}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* Next Prayer Indicator */}
+            {nextPrayer && !isPrayerCompleted(nextPrayer.id) && (
+                <div className="next-prayer-banner">
+                    <span className="next-label">NEXT</span>
+                    <span className="next-name">{nextPrayer.name}</span>
+                    <span className="next-time">
+                        {nextPrayer.isTomorrow ? 'Tomorrow' : `in ${Math.floor(nextPrayer.minutesUntil / 60)}h ${nextPrayer.minutesUntil % 60}m`}
+                    </span>
+                </div>
+            )}
 
             {/* Prayer list */}
             <div className="prayer-list">
                 {prayerTypes.map((prayer) => {
                     const completed = isPrayerCompleted(prayer.id)
+                    const isNext = nextPrayer?.id === prayer.id && !completed
                     return (
                         <motion.button
                             key={prayer.id}
-                            className={`prayer-item ${completed ? 'completed' : ''}`}
+                            className={`prayer-item ${completed ? 'completed' : ''} ${isNext ? 'is-next' : ''}`}
                             onClick={() => handlePrayerComplete(prayer)}
                             whileHover={{ scale: completed ? 1 : 1.02 }}
                             whileTap={{ scale: completed ? 1 : 0.98 }}
@@ -176,13 +301,100 @@ export default function PrayerTracker() {
                     font-weight: 600;
                 }
                 
-                .prayer-progress-mini {
+                .prayer-title-row {
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-md);
+                }
+                
+                .prayer-location {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    font-size: 0.7rem;
+                    color: var(--text-tertiary);
+                    padding: 2px 8px;
+                    background: var(--bg-tertiary);
+                    border-radius: var(--radius-sm);
+                }
+                
+                .prayer-actions {
                     display: flex;
                     align-items: center;
                     gap: var(--space-sm);
-                    font-size: 0.75rem;
-                    color: var(--text-secondary);
                 }
+                
+                .prayer-refresh-btn {
+                    background: transparent;
+                    border: 1px solid var(--border-subtle);
+                    border-radius: var(--radius-sm);
+                    padding: 6px;
+                    color: var(--text-secondary);
+                    cursor: pointer;
+                    transition: all var(--transition-fast);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .prayer-refresh-btn:hover {
+                    border-color: var(--accent-primary);
+                    color: var(--accent-primary);
+                }
+                
+                .prayer-refresh-btn:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+                
+                .spin {
+                    animation: spin 1s linear infinite;
+                }
+                
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                
+                .next-prayer-banner {
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                    padding: var(--space-sm) var(--space-md);
+                    background: linear-gradient(135deg, rgba(var(--accent-primary-rgb, 74, 158, 255), 0.15), rgba(var(--accent-primary-rgb, 74, 158, 255), 0.05));
+                    border: 1px solid rgba(var(--accent-primary-rgb, 74, 158, 255), 0.3);
+                    border-radius: var(--radius-md);
+                    margin-bottom: var(--space-md);
+                }
+                
+                .next-label {
+                    font-size: 0.6rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.1em;
+                    color: var(--accent-primary);
+                    padding: 2px 6px;
+                    background: rgba(var(--accent-primary-rgb, 74, 158, 255), 0.2);
+                    border-radius: 4px;
+                }
+                
+                .next-name {
+                    font-weight: 600;
+                    color: var(--text-primary);
+                }
+                
+                .next-time {
+                    margin-left: auto;
+                    font-size: 0.75rem;
+                    color: var(--accent-primary);
+                    font-family: var(--font-mono, monospace);
+                }
+                
+                .prayer-item.is-next {
+                    border-color: var(--accent-primary);
+                    background: rgba(var(--accent-primary-rgb, 74, 158, 255), 0.08);
+                }
+                
                 
                 .progress-bar-mini {
                     width: 60px;

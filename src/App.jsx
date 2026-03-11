@@ -36,14 +36,28 @@ const PageLoader = () => (
 
 // Theme definitions (must match Settings.jsx)
 const themes = {
-    cyber: { accent: '#4a9eff', bg: '#0a1a1a' },
-    neon: { accent: '#a855f7', bg: '#0a0a14' },
-    emerald: { accent: '#22c55e', bg: '#0a140a' },
-    sakura: { accent: '#ec4899', bg: '#140a10' },
-    amber: { accent: '#f59e0b', bg: '#14100a' },
-    arctic: { accent: '#06b6d4', bg: '#0a1214' },
-    blood: { accent: '#ef4444', bg: '#140a0a' },
-    mono: { accent: '#a1a1aa', bg: '#0a0a0a' },
+    cyber: { accent: '#4a9eff', bg: '#0a1a1a', name: 'Cyberpunk' },
+    neon: { accent: '#a855f7', bg: '#0a0a14', name: 'Neon Purple' },
+    emerald: { accent: '#22c55e', bg: '#0a140a', name: 'Emerald' },
+    sakura: { accent: '#ec4899', bg: '#140a10', name: 'Sakura' },
+    amber: { accent: '#f59e0b', bg: '#14100a', name: 'Amber' },
+    arctic: { accent: '#06b6d4', bg: '#0a1214', name: 'Arctic' },
+    blood: { accent: '#ef4444', bg: '#140a0a', name: 'Crimson' },
+    mono: { accent: '#a1a1aa', bg: '#0a0a0a', name: 'Monochrome' },
+    lyna: { accent: '#977DFF', bg: '#00033D', name: 'Lyna' },
+    mindful: { accent: '#A77693', bg: '#0F2D4D', name: 'Mindful' },
+    nature: { accent: '#E3EF26', bg: '#06231D', name: 'Nature' },
+    vibrant: { accent: '#E02F75', bg: '#050C38', name: 'Vibrant' },
+    forest: { accent: '#BDCDCF', bg: '#034C36', name: 'Forest' },
+}
+
+// Font definitions
+const fontFamilies = {
+    default: "'Inter', sans-serif",
+    fantasy: "'MedievalSharp', cursive",
+    pixel: "'Press Start 2P', system-ui",
+    stray: "'Major Mono Display', monospace",
+    minimal: "'Host Grotesk', sans-serif",
 }
 
 function App() {
@@ -71,14 +85,26 @@ function App() {
         return unsubscribe
     }, [])
 
-    // Apply saved theme on app startup
+    // Apply saved theme and font on app startup
     useEffect(() => {
         if (!hydrated || !user) return
+
+        // Apply Theme
         const themeName = user.theme || 'cyber'
         const theme = themes[themeName] || themes.cyber
         document.documentElement.style.setProperty('--accent-primary', theme.accent)
         document.documentElement.style.setProperty('--accent-glow', `${theme.accent}66`)
         document.documentElement.style.setProperty('--bg-primary', theme.bg)
+
+        // Apply Font
+        const fontName = user.font || 'default'
+        const fontFamily = fontFamilies[fontName] || fontFamilies.default
+        document.documentElement.style.setProperty('--font-primary', fontFamily)
+        if (fontName === 'fantasy' || fontName === 'pixel' || fontName === 'stray') {
+            document.documentElement.style.setProperty('--font-display', fontFamily)
+        } else {
+            document.documentElement.style.setProperty('--font-display', "'Orbitron', monospace")
+        }
     }, [user, hydrated])
 
     // Show loading while hydrating from localStorage

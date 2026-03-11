@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useStore } from '../store/useStore'
 import {
   Home, Brain, Palette, Heart, Skull, Moon,
@@ -8,312 +8,259 @@ import {
   User, Sparkles, Grid3X3, X, Trophy, Flame
 } from 'lucide-react'
 import { personalityTypes } from '../data/mbtiData'
-import AgeDisplay from '../components/AgeDisplay'
 import ReligionWidget from '../components/ReligionWidget'
+
+// Compact Age display for HUD
+function AgeHudDisplay({ birthDate, birthTime }) {
+  const [now, setNow] = useState(new Date())
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const ageData = useMemo(() => {
+    if (!birthDate) return null
+    const [year, month, day] = birthDate.split('-').map(Number)
+    let hours = 0, minutes = 0
+    if (birthTime) {
+      const [h, m] = birthTime.split(':').map(Number)
+      hours = h || 0
+      minutes = m || 0
+    }
+    const birth = new Date(year, month - 1, day, hours, minutes, 0, 0)
+    const diffMs = now - birth
+    if (diffMs < 0) return null
+
+    const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    const years = Math.floor(totalDays / 365.25)
+    const remainingDays = totalDays - Math.floor(years * 365.25)
+    const months = Math.floor(remainingDays / 30.44)
+    const days = Math.floor(remainingDays - (months * 30.44))
+
+    return { years, months, days }
+  }, [birthDate, birthTime, now])
+
+  if (!ageData) return <span className="age-value">--</span>
+
+  return (
+    <span className="age-value">
+      {ageData.years}Y {ageData.months}M {ageData.days}D
+    </span>
+  )
+}
+
+// 2D Skeleton figure for Dashboard — links to Avatar
+function SkeletonFigure2D() {
+  return (
+    <svg viewBox="0 0 60 110" width="46" height="84" style={{ display: 'block' }}>
+      {/* Head */}
+      <circle cx="30" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
+      {/* Neck */}
+      <line x1="30" y1="18" x2="30" y2="23" stroke="currentColor" strokeWidth="2" />
+      {/* Shoulders */}
+      <line x1="12" y1="26" x2="48" y2="26" stroke="currentColor" strokeWidth="2" />
+      {/* Spine */}
+      <line x1="30" y1="23" x2="30" y2="58" stroke="currentColor" strokeWidth="2" />
+      {/* Ribs */}
+      <line x1="30" y1="30" x2="20" y2="38" stroke="currentColor" strokeWidth="1.2" opacity="0.7" />
+      <line x1="30" y1="30" x2="40" y2="38" stroke="currentColor" strokeWidth="1.2" opacity="0.7" />
+      <line x1="30" y1="36" x2="20" y2="42" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+      <line x1="30" y1="36" x2="40" y2="42" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+      {/* Upper arms */}
+      <line x1="12" y1="26" x2="6" y2="44" stroke="currentColor" strokeWidth="2" />
+      <line x1="48" y1="26" x2="54" y2="44" stroke="currentColor" strokeWidth="2" />
+      {/* Lower arms */}
+      <line x1="6" y1="44" x2="4" y2="60" stroke="currentColor" strokeWidth="1.8" />
+      <line x1="54" y1="44" x2="56" y2="60" stroke="currentColor" strokeWidth="1.8" />
+      {/* Pelvis */}
+      <path d="M20 58 Q30 64 40 58" fill="none" stroke="currentColor" strokeWidth="2" />
+      {/* Upper legs */}
+      <line x1="22" y1="60" x2="18" y2="82" stroke="currentColor" strokeWidth="2" />
+      <line x1="38" y1="60" x2="42" y2="82" stroke="currentColor" strokeWidth="2" />
+      {/* Lower legs */}
+      <line x1="18" y1="82" x2="16" y2="104" stroke="currentColor" strokeWidth="1.8" />
+      <line x1="42" y1="82" x2="44" y2="104" stroke="currentColor" strokeWidth="1.8" />
+      {/* Feet */}
+      <line x1="16" y1="104" x2="10" y2="108" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="44" y1="104" x2="50" y2="108" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  )
+}
 
 export default function Dashboard() {
   const { user, realms, getOverallBalance } = useStore()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  // Safety check for critical data - AFTER all hook calls
-  if (!user || !realms || Object.keys(realms).length === 0) {
+  // Safety check
+  if (!user?.name || !realms) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(180deg, #0a1a1a 0%, #0d1f1f 50%, #0a1515 100%)',
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: 'monospace'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <h2 style={{ color: '#ef4444', marginBottom: '8px', fontSize: '1.25rem' }}>NEURAL SYNC ERROR</h2>
-          <p style={{ color: '#6b7280', marginBottom: '16px' }}>Realm data disconnected.</p>
-          <button
-            onClick={() => { localStorage.clear(); window.location.reload(); }}
-            style={{
-              padding: '8px 16px',
-              border: '1px solid #ef4444',
-              background: 'transparent',
-              color: '#ef4444',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            HARD RESET
-          </button>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: '#4a9eff' }}>
+        Loading...
       </div>
     )
   }
 
-  // These computations are now safe because we verified realms exists
-  const overallBalance = getOverallBalance()
-
-  // Calculate user "level" safely
-  const totalEntries = Object.values(realms).reduce((sum, r) => sum + (r?.entries?.length || 0), 0)
+  // Calculate values
+  const overallBalance = Math.round(getOverallBalance() || 0)
+  const totalEntries = Object.values(realms).reduce((sum, r) => sum + (r.entries?.length || 0), 0)
   const userLevel = Math.floor(totalEntries / 5) + 1
-  const xpProgress = (totalEntries % 5) * 20
+  const personality = personalityTypes[user.mbti]
 
-  const personality = user.mbti ? personalityTypes?.[user.mbti] : null
-
-  // Quotient mapping to realms - Safely access properties
-  const safeRealm = (key) => realms[key] || { color: '#888', balance: 0, entries: [] }
-
-  const quotients = [
-    { key: 'IQ', name: 'Intelligence', realm: 'cerebra', color: safeRealm('cerebra').color, value: safeRealm('cerebra').balance },
-    { key: 'TQ', name: 'Technical/Creative', realm: 'elysia', color: safeRealm('elysia').color, value: safeRealm('elysia').balance },
-    { key: 'EQ', name: 'Emotional', realm: 'empyra', color: safeRealm('empyra').color, value: safeRealm('empyra').balance },
-    { key: 'AQ', name: 'Adversity', realm: 'oblivion', color: safeRealm('oblivion').color, value: safeRealm('oblivion').balance },
-    { key: 'SQ', name: 'Spiritual', realm: 'sanctum', color: safeRealm('sanctum').color, value: safeRealm('sanctum').balance },
-  ]
-
-  // Menu items for hexagonal grid
+  // Menu items for hex menu
   const menuItems = [
-    { key: 'cerebra', path: '/cerebra', icon: Brain, label: 'Cerebra', color: realms.cerebra.color, count: realms.cerebra.entries.length },
-    { key: 'elysia', path: '/elysia', icon: Palette, label: 'Elysia', color: realms.elysia.color, count: realms.elysia.entries.length },
-    { key: 'empyra', path: '/empyra', icon: Heart, label: 'Empyra', color: realms.empyra.color, count: realms.empyra.entries.length },
-    { key: 'oblivion', path: '/oblivion', icon: Skull, label: 'Oblivion', color: realms.oblivion.color, count: realms.oblivion.entries.length },
-    { key: 'sanctum', path: '/sanctum', icon: Moon, label: 'Sanctum', color: realms.sanctum.color, count: realms.sanctum.entries.length },
-    { key: 'echo', path: '/echo', icon: Cpu, label: 'ECHO', color: '#4a9eff' },
-    { key: 'timeline', path: '/timeline', icon: Clock, label: 'Chronos', color: '#22c55e' },
-    { key: 'recap', path: '/recap', icon: TrendingUp, label: 'Recap', color: '#f59e0b' },
-    { key: 'avatar', path: '/avatar', icon: Activity, label: 'Health', color: '#ef4444' },
-    { key: 'constellation', path: '/constellation', icon: Sparkles, label: 'Skills', color: '#a855f7' },
-    { key: 'achievements', path: '/achievements', icon: Trophy, label: 'Collection', color: '#fbbf24' },
-    { key: 'habits', path: '/habits', icon: Flame, label: 'Habits', color: '#f97316' },
+    { key: 'mind', path: '/mind', icon: Brain, label: 'Mind', color: '#4a9eff' },
+    { key: 'body', path: '/body', icon: Heart, label: 'Body', color: '#22c55e' },
+    { key: 'soul', path: '/soul', icon: Sparkles, label: 'Soul', color: '#a855f7' },
+    { key: 'echo', path: '/echo', icon: Cpu, label: 'Echo', color: '#f59e0b' },
+    { key: 'religion', path: '/religion', icon: Moon, label: 'Religion', color: '#ec4899' },
+    { key: 'avatar', path: '/avatar', icon: User, label: 'Avatar', color: '#06b6d4' },
+    { key: 'settings', path: '/settings', icon: Settings, label: 'Settings', color: '#6b7280' },
   ]
 
-  // Bottom nav items
+  // Bottom nav
   const bottomNav = [
     { path: '/', icon: Home, label: 'Home' },
-    { path: '/avatar', icon: User, label: 'Avatar' },
     { action: 'menu', icon: Grid3X3, label: 'Menu' },
-    { path: '/echo', icon: Cpu, label: 'ECHO' },
     { path: '/settings', icon: Settings, label: 'Settings' },
   ]
 
   return (
-    <div className="game-dashboard">
-      {/* Main Content */}
-      <main className="dashboard-content">
-        {/* Profile Card */}
-        <motion.div
-          className="profile-card"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          {/* Top Stats Bar */}
-          <div className="top-stats">
-            <div className="stat-chip">
-              <span className="stat-icon">⚡</span>
-              <span>{totalEntries}</span>
-            </div>
-            <div className="stat-chip">
-              <span className="stat-icon">🎯</span>
-              <span>{overallBalance}%</span>
-            </div>
-            <div className="stat-chip">
-              <span className="stat-icon">📊</span>
-              <span>Lv.{userLevel}</span>
-            </div>
-          </div>
+    <div className="dashboard">
+      <main className="dashboard-main">
 
-          {/* Character Display */}
-          <div className="character-section">
-            {/* HP/XP Bar */}
-            <div className="hp-bar-container">
-              <div className="hp-bar">
-                <motion.div
-                  className="hp-fill"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${overallBalance}%` }}
-                />
-              </div>
-              <span className="hp-text">{overallBalance}/100</span>
-            </div>
+        {/* Header: Welcome + Name */}
+        <div className="header-row">
+          <span className="welcome-text">
+            {user.mode === 'advanced' ? 'Welcome Player,' : 'Welcome User,'}
+          </span>
+          <span className="user-name">{user.name}</span>
+        </div>
 
-            {/* Avatar Circle */}
-            <Link to="/avatar" className="character-avatar">
-              <div className="avatar-glow" />
-              <div className="avatar-inner">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="level-ring">
-                <span>Lv{userLevel}</span>
-              </div>
-            </Link>
-
-            {/* Name & Status */}
-            <h1 className="character-name">{user.name}</h1>
-
-            {/* MBTI Badge */}
-            {user.mbti && (
-              <div className="mbti-badge">
-                <span className="mbti-type">{user.mbti}</span>
-                {personality && <span className="mbti-title">{personality.name}</span>}
-              </div>
+        {/* Stats Row: Age left, Level right */}
+        <div className="stats-row">
+          <Link to="/timeline" className="stat-block age-chronos-link" title="Open Chronos Timeline">
+            <span className="stat-label">AGE <Clock size={9} style={{ display: 'inline', opacity: 0.5 }} /></span>
+            {user.birthDate ? (
+              <AgeHudDisplay birthDate={user.birthDate} birthTime={user.birthTime} />
+            ) : (
+              <span className="age-value">--</span>
             )}
-
-            {/* Interactive Age Display */}
-            {user.birthDate && (
-              <AgeDisplay
-                birthDate={user.birthDate}
-                birthTime={user.birthTime}
-                onEditBirth={() => {/* Could navigate to settings */ }}
-              />
-            )}
+          </Link>
+          <div className="stat-block right">
+            <span className="stat-label">LV</span>
+            <span className="level-value">{userLevel}</span>
           </div>
+        </div>
 
-          {/* MBTI Scores */}
+        {/* Gender */}
+        <div className="gender-row">
+          {user.gender && <span className="gender-text">{user.gender.toUpperCase()}</span>}
+        </div>
+
+        {/* MBTI + Skeleton + Avatar Row */}
+        <div className="profile-row">
+          {user.mbti ? (
+            <div className="mbti-block">
+              <span className="mbti-code">{user.mbti}</span>
+              {personality && <span className="mbti-name">{personality.name}</span>}
+            </div>
+          ) : null}
+
+          {/* 2D Skeleton — click to enter 3D Avatar */}
+          <Link to="/avatar" className="skeleton-2d-btn" title="View your 3D Avatar">
+            <SkeletonFigure2D />
+            <span className="skeleton-hint">3D</span>
+          </Link>
+
+          <Link to="/avatar" className="avatar-block">
+            {personality?.avatars?.[user.gender] ? (
+              <img src={personality.avatars[user.gender]} alt={user.mbti} className="avatar-img" />
+            ) : (
+              <span className="avatar-letter">{user.name?.charAt(0).toUpperCase() || '?'}</span>
+            )}
+          </Link>
+
+          {/* MBTI Score */}
           {user.mbtiScores && (
-            <div className="mbti-bars">
-              {[
-                { d1: 'E', d2: 'I', c1: '#f59e0b', c2: '#3b82f6' },
-                { d1: 'S', d2: 'N', c1: '#22c55e', c2: '#a855f7' },
-                { d1: 'T', d2: 'F', c1: '#ef4444', c2: '#ec4899' },
-                { d1: 'J', d2: 'P', c1: '#06b6d4', c2: '#f97316' },
-              ].map(({ d1, d2, c1, c2 }) => (
-                <div key={d1} className="mbti-row">
-                  <span className="mbti-label" style={{ color: (user.mbtiScores?.[d1] ?? 0) > 50 ? c1 : 'inherit' }}>{d1}</span>
-                  <div className="mbti-track">
-                    <div className="mbti-fill" style={{ width: `${user.mbtiScores?.[d1] ?? 0}%`, background: c1 }} />
-                  </div>
-                  <span className="mbti-label" style={{ color: (user.mbtiScores?.[d2] ?? 0) > 50 ? c2 : 'inherit' }}>{d2}</span>
-                </div>
+            <div className="mbti-score-block">
+              {['E', 'S', 'T', 'J'].map(d => (
+                <span key={d} className="score-chip">
+                  {d}:{user.mbtiScores?.[d] || 50}
+                </span>
               ))}
             </div>
           )}
+        </div>
 
-          {/* Realm Stats */}
-          <div className="realm-stats">
+        {/* Streak */}
+        <div className="streak-row">
+          <Flame size={16} className="streak-icon" />
+          <span className="streak-num">{user.streak || 0}</span>
+          <span className="streak-label">days streak</span>
+        </div>
+
+        {/* Echo Button */}
+        <Link to="/echo" className="echo-btn">
+          <Cpu size={20} />
+          <span>Echo</span>
+        </Link>
+
+        {/* Realm Totals */}
+        <div className="realms-section">
+          <span className="section-label">REALMS</span>
+          <div className="realm-list">
             {Object.entries(realms).map(([key, realm]) => (
-              <Link to={`/${key}`} key={key} className="realm-stat">
-                <div className="realm-icon-small" style={{ background: realm.color }}>
-                  {realm.icon}
-                </div>
+              <div key={key} className="realm-item">
+                <span className="realm-icon" style={{ color: realm.color }}>{realm.icon}</span>
                 <div className="realm-bar">
-                  <div
-                    className="realm-fill"
-                    style={{ width: `${realm.balance}%`, background: realm.color }}
-                  />
+                  <div className="realm-fill" style={{ width: `${realm.balance}%`, background: realm.color }} />
                 </div>
-                <span className="realm-value">{realm.balance}</span>
-              </Link>
+                <span className="realm-percent">{realm.balance}%</span>
+              </div>
             ))}
           </div>
+        </div>
 
-          {/* Quotient Pentagon Diagram */}
-          <div className="quotient-section">
-            <h3 className="section-label">Quotient Analysis</h3>
-            <div className="quotient-pentagon">
-              <svg viewBox="0 0 200 200" className="pentagon-svg">
-                {/* Background pentagon */}
-                <polygon
-                  points="100,10 190,75 155,175 45,175 10,75"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.1)"
-                  strokeWidth="1"
-                />
-                <polygon
-                  points="100,40 160,85 140,155 60,155 40,85"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.05)"
-                  strokeWidth="1"
-                />
-                <polygon
-                  points="100,70 130,95 120,135 80,135 70,95"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.05)"
-                  strokeWidth="1"
-                />
+        {/* Religion Widget */}
+        <ReligionWidget />
 
-                {/* Value pentagon - scaled by quotient values */}
-                <polygon
-                  points={`
-                    100,${10 + (100 - quotients[0].value) * 0.9}
-                    ${190 - (100 - quotients[1].value) * 0.9},${75 + (100 - quotients[1].value) * 0.3}
-                    ${155 - (100 - quotients[2].value) * 0.5},${175 - (100 - quotients[2].value) * 0.8}
-                    ${45 + (100 - quotients[3].value) * 0.5},${175 - (100 - quotients[3].value) * 0.8}
-                    ${10 + (100 - quotients[4].value) * 0.9},${75 + (100 - quotients[4].value) * 0.3}
-                  `}
-                  fill="rgba(74, 158, 255, 0.2)"
-                  stroke="#4a9eff"
-                  strokeWidth="2"
-                />
-
-                {/* Labels */}
-                <text x="100" y="5" textAnchor="middle" fill="#4a9eff" fontSize="10" fontWeight="600">IQ</text>
-                <text x="195" y="78" textAnchor="start" fill="#f59e0b" fontSize="10" fontWeight="600">TQ</text>
-                <text x="165" y="185" textAnchor="middle" fill="#ec4899" fontSize="10" fontWeight="600">EQ</text>
-                <text x="35" y="185" textAnchor="middle" fill="#6b7280" fontSize="10" fontWeight="600">AQ</text>
-                <text x="5" y="78" textAnchor="end" fill="#8b5cf6" fontSize="10" fontWeight="600">SQ</text>
-              </svg>
-            </div>
-
-            {/* Quotient bars */}
-            <div className="quotient-bars">
-              {quotients.map(q => (
-                <Link to={`/${q.realm}`} key={q.key} className="quotient-bar-row">
-                  <span className="q-key" style={{ color: q.color }}>{q.key}</span>
-                  <span className="q-name">{q.name}</span>
-                  <div className="q-bar">
-                    <div className="q-fill" style={{ width: `${q.value}%`, background: q.color }} />
-                  </div>
-                  <span className="q-value">{q.value}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* Religion Widget */}
-          <ReligionWidget />
-        </motion.div>
       </main>
 
-      {/* Hexagonal Menu Overlay */}
+      {/* Hex Menu Overlay */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className="hex-menu-overlay"
+            className="menu-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setMenuOpen(false)}
           >
             <motion.div
-              className="hex-menu-container"
-              initial={{ scale: 0.8, opacity: 0 }}
+              className="menu-container"
+              initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <button className="close-menu" onClick={() => setMenuOpen(false)}>
+              <button className="close-btn" onClick={() => setMenuOpen(false)}>
                 <X size={24} />
               </button>
-
-              <div className="hex-grid">
-                {menuItems.map((item, index) => (
+              <div className="menu-grid">
+                {menuItems.map((item, i) => (
                   <motion.div
                     key={item.key}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
+                    transition={{ delay: i * 0.05 }}
                   >
-                    <Link
-                      to={item.path}
-                      className="hex-item"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <div className="hex-shape" style={{ '--hex-color': item.color }}>
-                        <item.icon size={28} />
+                    <Link to={item.path} className="menu-item" onClick={() => setMenuOpen(false)}>
+                      <div className="menu-icon" style={{ background: item.color }}>
+                        <item.icon size={24} />
                       </div>
-                      {item.count !== undefined && (
-                        <span className="hex-badge">{item.count}</span>
-                      )}
-                      <span className="hex-label">{item.label}</span>
+                      <span className="menu-label">{item.label}</span>
                     </Link>
                   </motion.div>
                 ))}
@@ -323,19 +270,17 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Nav */}
       <nav className="bottom-nav">
         {bottomNav.map((item) => (
           item.action === 'menu' ? (
             <button
               key="menu"
-              className={`nav-item menu-trigger ${menuOpen ? 'active' : ''}`}
+              className={`nav-item ${menuOpen ? 'active' : ''}`}
               onClick={() => setMenuOpen(!menuOpen)}
             >
-              <div className="nav-icon-wrap">
-                {menuOpen ? <X size={24} /> : <item.icon size={24} />}
-              </div>
-              <span className="nav-label">{menuOpen ? 'Close' : item.label}</span>
+              {menuOpen ? <X size={22} /> : <item.icon size={22} />}
+              <span>{menuOpen ? 'Close' : item.label}</span>
             </button>
           ) : (
             <Link
@@ -343,256 +288,281 @@ export default function Dashboard() {
               to={item.path}
               className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
             >
-              <div className="nav-icon-wrap">
-                <item.icon size={20} />
-              </div>
-              <span className="nav-label">{item.label}</span>
+              <item.icon size={22} />
+              <span>{item.label}</span>
             </Link>
           )
         ))}
       </nav>
 
       <style>{`
-        .game-dashboard {
+        .dashboard {
           min-height: 100vh;
           background: linear-gradient(180deg, #0a1a1a 0%, #0d1f1f 50%, #0a1515 100%);
           padding-bottom: 80px;
         }
 
-        .dashboard-content {
-          padding: var(--space-lg);
-          max-width: 500px;
+        .dashboard-main {
+          padding: 20px;
+          max-width: 480px;
           margin: 0 auto;
         }
 
-        /* Profile Card */
-        .profile-card {
-          background: linear-gradient(135deg, rgba(20, 40, 40, 0.9), rgba(15, 30, 30, 0.9));
-          border: 2px solid rgba(74, 158, 255, 0.3);
-          border-radius: 16px;
-          padding: var(--space-lg);
-          box-shadow: 
-            0 0 20px rgba(74, 158, 255, 0.1),
-            inset 0 1px 0 rgba(255,255,255,0.05);
+        /* Header */
+        .header-row {
+          margin-bottom: 16px;
         }
 
-        /* Top Stats */
-        .top-stats {
+        .welcome-text {
+          font-size: 0.875rem;
+          color: rgba(255,255,255,0.6);
+          display: block;
+        }
+
+        .user-name {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: var(--accent-primary, #4a9eff);
+        }
+
+        /* Stats Row */
+        .stats-row {
           display: flex;
+          justify-content: space-between;
+          margin-bottom: 16px;
+          padding: 12px 16px;
+          background: rgba(0,0,0,0.3);
+          border: 1px solid rgba(74,158,255,0.3);
+          border-radius: 8px;
+        }
+
+        .stat-block {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .stat-block.right {
+          align-items: flex-end;
+        }
+
+        .age-chronos-link {
+          text-decoration: none;
+          cursor: pointer;
+          border-bottom: 1px solid rgba(74,158,255,0.2);
+          transition: border-color 0.2s;
+        }
+        .age-chronos-link:hover {
+          border-color: rgba(74,158,255,0.7);
+        }
+        .age-chronos-link:hover .age-value {
+          text-shadow: 0 0 10px var(--accent-primary, #4a9eff);
+        }
+
+        .stat-label {
+          font-size: 0.65rem;
+          letter-spacing: 1px;
+          color: rgba(255,255,255,0.5);
+        }
+
+        .age-value, .level-value {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: var(--accent-primary, #4a9eff);
+          font-family: var(--font-mono, monospace);
+        }
+
+        /* Gender */
+        .gender-row {
+          text-align: center;
+          margin-bottom: 12px;
+        }
+
+        .gender-text {
+          font-size: 0.75rem;
+          letter-spacing: 2px;
+          color: rgba(255,255,255,0.5);
+        }
+
+        /* Profile Row */
+        .profile-row {
+          display: flex;
+          align-items: center;
           justify-content: center;
-          gap: var(--space-md);
-          margin-bottom: var(--space-lg);
+          gap: 16px;
+          margin-bottom: 20px;
         }
 
-        .stat-chip {
+        .mbti-block {
           display: flex;
+          flex-direction: column;
           align-items: center;
           gap: 4px;
-          padding: 4px 12px;
-          background: rgba(74, 158, 255, 0.15);
-          border: 1px solid rgba(74, 158, 255, 0.3);
-          border-radius: 20px;
-          font-size: 0.75rem;
-          font-weight: 600;
         }
 
-        .stat-icon { font-size: 0.875rem; }
-
-        /* Character Section */
-        .character-section {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          margin-bottom: var(--space-lg);
-        }
-
-        .hp-bar-container {
-          width: 100%;
-          display: flex;
-          align-items: center;
-          gap: var(--space-sm);
-          margin-bottom: var(--space-lg);
-        }
-
-        .hp-bar {
-          flex: 1;
-          height: 12px;
-          background: rgba(0,0,0,0.4);
-          border: 1px solid rgba(74, 158, 255, 0.3);
-          border-radius: 6px;
-          overflow: hidden;
-        }
-
-        .hp-fill {
-          height: 100%;
-          background: linear-gradient(90deg, #22c55e, #4ade80);
-          border-radius: 6px;
-          box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
-        }
-
-        .hp-text {
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: #4ade80;
-          min-width: 60px;
-          text-align: right;
-        }
-
-        /* Avatar */
-        .character-avatar {
-          position: relative;
-          width: 100px;
-          height: 100px;
-          margin-bottom: var(--space-md);
-        }
-
-        .avatar-glow {
-          position: absolute;
-          inset: -10px;
-          background: radial-gradient(circle, rgba(74, 158, 255, 0.3), transparent 70%);
-          animation: pulse-glow 2s infinite;
-        }
-
-        @keyframes pulse-glow {
-          0%, 100% { opacity: 0.5; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.1); }
-        }
-
-        .avatar-inner {
-          width: 100%;
-          height: 100%;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #1a3a3a, #0d2020);
-          border: 3px solid rgba(74, 158, 255, 0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 2.5rem;
-          font-weight: 700;
-          color: #4a9eff;
-          position: relative;
-          z-index: 1;
-        }
-
-        .level-ring {
-          position: absolute;
-          bottom: -5px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: linear-gradient(135deg, #f59e0b, #d97706);
-          padding: 2px 12px;
-          border-radius: 10px;
-          font-size: 0.65rem;
-          font-weight: 700;
-          color: #000;
-          z-index: 2;
-        }
-
-        .character-name {
-          font-family: var(--font-display);
-          font-size: 1.5rem;
-          color: #4a9eff;
-          text-shadow: 0 0 10px rgba(74, 158, 255, 0.5);
-          margin-bottom: var(--space-sm);
-        }
-
-        .mbti-badge {
-          display: flex;
-          align-items: center;
-          gap: var(--space-sm);
-          padding: var(--space-xs) var(--space-md);
-          background: rgba(74, 158, 255, 0.1);
-          border: 1px solid rgba(74, 158, 255, 0.3);
-          border-radius: 8px;
-          margin-bottom: var(--space-xs);
-        }
-
-        .mbti-type {
-          font-weight: 700;
+        .mbti-code {
           font-size: 1rem;
-          color: #4a9eff;
-        }
-
-        .mbti-title {
-          font-size: 0.75rem;
-          color: var(--text-secondary);
-        }
-
-        .age-display {
-          font-size: 0.875rem;
-          color: var(--text-secondary);
-        }
-
-        /* MBTI Bars */
-        .mbti-bars {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: var(--space-sm);
-          margin-bottom: var(--space-lg);
-          padding: var(--space-md);
-          background: rgba(0,0,0,0.2);
-          border-radius: 8px;
-        }
-
-        .mbti-row {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-
-        .mbti-label {
-          font-size: 0.7rem;
           font-weight: 700;
-          width: 14px;
-          text-align: center;
+          color: var(--accent-primary, #4a9eff);
+          padding: 4px 12px;
+          background: rgba(74,158,255,0.15);
+          border: 1px solid rgba(74,158,255,0.3);
+          border-radius: 20px;
         }
 
-        .mbti-track {
-          flex: 1;
-          height: 6px;
-          background: rgba(255,255,255,0.1);
-          border-radius: 3px;
-          overflow: hidden;
+        .mbti-name {
+          font-size: 0.7rem;
+          color: rgba(255,255,255,0.5);
         }
 
-        .mbti-fill {
-          height: 100%;
-          border-radius: 3px;
-        }
-
-        /* Realm Stats */
-        .realm-stats {
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-sm);
-        }
-
-        .realm-stat {
-          display: flex;
-          align-items: center;
-          gap: var(--space-sm);
-          padding: var(--space-sm);
-          background: rgba(0,0,0,0.2);
-          border: 1px solid rgba(255,255,255,0.05);
-          border-radius: 8px;
-          text-decoration: none;
-          color: inherit;
-          transition: all 0.2s;
-        }
-
-        .realm-stat:hover {
-          background: rgba(74, 158, 255, 0.1);
-          border-color: rgba(74, 158, 255, 0.3);
-        }
-
-        .realm-icon-small {
-          width: 28px;
-          height: 28px;
-          border-radius: 6px;
+        .avatar-block {
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          border: 3px solid var(--accent-primary, #4a9eff);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 0.875rem;
+          overflow: hidden;
+          background: rgba(0,0,0,0.3);
+        }
+
+        .avatar-img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+
+        .avatar-letter {
+          font-size: 2rem;
+          font-weight: 700;
+          color: var(--accent-primary, #4a9eff);
+        }
+
+        .mbti-score-block {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .score-chip {
+          font-size: 0.65rem;
+          padding: 2px 6px;
+          background: rgba(255,255,255,0.05);
+          border-radius: 4px;
+          color: rgba(255,255,255,0.6);
+        }
+
+        /* Skeleton 2D button */
+        .skeleton-2d-btn {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2px;
+          color: var(--accent-primary, #4a9eff);
+          text-decoration: none;
+          padding: 6px 10px;
+          border: 1px solid rgba(74,158,255,0.25);
+          border-radius: 8px;
+          background: rgba(74,158,255,0.05);
+          transition: all 0.25s ease;
+          animation: skeleton-breathe 3s ease-in-out infinite;
+          cursor: pointer;
+        }
+
+        .skeleton-2d-btn:hover {
+          border-color: var(--accent-primary, #4a9eff);
+          background: rgba(74,158,255,0.12);
+          box-shadow: 0 0 18px rgba(74,158,255,0.35);
+          transform: scale(1.05);
+          animation: none;
+        }
+
+        .skeleton-hint {
+          font-size: 0.55rem;
+          letter-spacing: 1.5px;
+          color: rgba(74,158,255,0.6);
+          font-family: var(--font-mono, monospace);
+        }
+
+        @keyframes skeleton-breathe {
+          0%, 100% { filter: drop-shadow(0 0 3px rgba(74,158,255,0.3)); }
+          50% { filter: drop-shadow(0 0 9px rgba(74,158,255,0.65)); }
+        }
+
+        /* Streak */
+        .streak-row {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+
+        .streak-icon {
+          color: #f59e0b;
+        }
+
+        .streak-num {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #f59e0b;
+        }
+
+        .streak-label {
+          font-size: 0.75rem;
+          color: rgba(255,255,255,0.5);
+        }
+
+        /* Echo Button */
+        .echo-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          width: 100%;
+          padding: 12px;
+          background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.1));
+          border: 1px solid rgba(245,158,11,0.4);
+          border-radius: 8px;
+          color: #f59e0b;
+          font-weight: 600;
+          margin-bottom: 20px;
+        }
+
+        .echo-btn:hover {
+          background: rgba(245,158,11,0.3);
+        }
+
+        /* Realms */
+        .realms-section {
+          margin-bottom: 20px;
+        }
+
+        .section-label {
+          font-size: 0.7rem;
+          letter-spacing: 2px;
+          color: rgba(255,255,255,0.4);
+          display: block;
+          margin-bottom: 12px;
+        }
+
+        .realm-list {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .realm-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .realm-icon {
+          font-size: 1rem;
+          width: 24px;
+          text-align: center;
         }
 
         .realm-bar {
@@ -606,202 +576,86 @@ export default function Dashboard() {
         .realm-fill {
           height: 100%;
           border-radius: 4px;
+          transition: width 0.3s ease;
         }
 
-        .realm-value {
+        .realm-percent {
           font-size: 0.75rem;
-          font-weight: 600;
-          min-width: 24px;
+          color: rgba(255,255,255,0.6);
+          width: 35px;
           text-align: right;
         }
 
-        /* Quotient Section */
-        .quotient-section {
-          margin-top: var(--space-lg);
-          padding-top: var(--space-lg);
-          border-top: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .section-label {
-          font-size: 0.75rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          color: var(--text-secondary);
-          text-align: center;
-          margin-bottom: var(--space-md);
-        }
-
-        .quotient-pentagon {
-          display: flex;
-          justify-content: center;
-          margin-bottom: var(--space-lg);
-        }
-
-        .pentagon-svg {
-          width: 200px;
-          height: 200px;
-        }
-
-        .quotient-bars {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-
-        .quotient-bar-row {
-          display: flex;
-          align-items: center;
-          gap: var(--space-sm);
-          text-decoration: none;
-          color: inherit;
-          padding: 6px;
-          border-radius: 6px;
-          transition: all 0.2s;
-        }
-
-        .quotient-bar-row:hover {
-          background: rgba(255,255,255,0.05);
-        }
-
-        .q-key {
-          font-size: 0.75rem;
-          font-weight: 700;
-          width: 24px;
-        }
-
-        .q-name {
-          font-size: 0.65rem;
-          color: var(--text-secondary);
-          width: 80px;
-        }
-
-        .q-bar {
-          flex: 1;
-          height: 6px;
-          background: rgba(255,255,255,0.1);
-          border-radius: 3px;
-          overflow: hidden;
-        }
-
-        .q-fill {
-          height: 100%;
-          border-radius: 3px;
-          transition: width 0.5s ease;
-        }
-
-        .q-value {
-          font-size: 0.7rem;
-          font-weight: 600;
-          width: 24px;
-          text-align: right;
-        }
-
-        /* Hexagonal Menu Overlay */
-        .hex-menu-overlay {
+        /* Menu Overlay */
+        .menu-overlay {
           position: fixed;
           inset: 0;
-          background: rgba(0, 15, 15, 0.95);
-          backdrop-filter: blur(20px);
-          z-index: 200;
+          background: rgba(0,0,0,0.85);
+          z-index: 100;
           display: flex;
           align-items: center;
           justify-content: center;
         }
 
-        .hex-menu-container {
-          width: 100%;
-          max-width: 400px;
-          padding: var(--space-xl);
+        .menu-container {
+          background: rgba(10,26,26,0.95);
+          border: 1px solid rgba(74,158,255,0.3);
+          border-radius: 16px;
+          padding: 24px;
           position: relative;
         }
 
-        .close-menu {
+        .close-btn {
           position: absolute;
-          top: 0;
-          right: var(--space-lg);
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(255,255,255,0.1);
-          border: 1px solid rgba(255,255,255,0.2);
-          border-radius: 50%;
-          color: white;
+          top: 12px;
+          right: 12px;
+          background: none;
+          border: none;
+          color: rgba(255,255,255,0.6);
           cursor: pointer;
         }
 
-        .hex-grid {
+        .menu-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: var(--space-lg);
-          justify-items: center;
+          gap: 16px;
         }
 
-        .hex-item {
+        .menu-item {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: var(--space-sm);
-          text-decoration: none;
-          color: inherit;
-          position: relative;
+          gap: 8px;
+          padding: 12px;
         }
 
-        .hex-shape {
-          width: 70px;
-          height: 80px;
-          background: linear-gradient(135deg, rgba(74, 158, 255, 0.15), rgba(74, 158, 255, 0.05));
-          border: 2px solid rgba(74, 158, 255, 0.3);
-          clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        .menu-icon {
+          width: 50px;
+          height: 50px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: var(--hex-color, #4a9eff);
-          transition: all 0.2s;
+          color: white;
         }
 
-        .hex-item:hover .hex-shape {
-          background: linear-gradient(135deg, rgba(74, 158, 255, 0.3), rgba(74, 158, 255, 0.15));
-          border-color: var(--hex-color, #4a9eff);
-          transform: scale(1.1);
-          box-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
-        }
-
-        .hex-badge {
-          position: absolute;
-          top: 0;
-          right: 10px;
-          background: linear-gradient(135deg, #f59e0b, #d97706);
-          color: #000;
-          font-size: 0.65rem;
-          font-weight: 700;
-          padding: 2px 8px;
-          border-radius: 10px;
-        }
-
-        .hex-label {
+        .menu-label {
           font-size: 0.75rem;
-          font-weight: 500;
-          color: var(--text-secondary);
+          color: rgba(255,255,255,0.7);
         }
 
-        /* Bottom Navigation */
+        /* Bottom Nav */
         .bottom-nav {
           position: fixed;
           bottom: 0;
           left: 0;
           right: 0;
-          height: 70px;
-          background: linear-gradient(180deg, rgba(10, 25, 25, 0.95), rgba(5, 15, 15, 0.98));
-          border-top: 1px solid rgba(74, 158, 255, 0.2);
           display: flex;
           justify-content: space-around;
-          align-items: center;
-          padding: 0 var(--space-md);
-          z-index: 100;
-          backdrop-filter: blur(12px);
+          padding: 12px 0;
+          background: rgba(10,20,20,0.95);
+          border-top: 1px solid rgba(74,158,255,0.2);
+          backdrop-filter: blur(10px);
         }
 
         .nav-item {
@@ -809,53 +663,15 @@ export default function Dashboard() {
           flex-direction: column;
           align-items: center;
           gap: 4px;
-          padding: var(--space-sm);
+          color: rgba(255,255,255,0.5);
+          font-size: 0.7rem;
           background: none;
           border: none;
-          color: var(--text-secondary);
-          text-decoration: none;
           cursor: pointer;
-          transition: all 0.2s;
         }
 
         .nav-item.active {
-          color: #4a9eff;
-        }
-
-        .nav-icon-wrap {
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 12px;
-          transition: all 0.2s;
-        }
-
-        .nav-item.active .nav-icon-wrap {
-          background: rgba(74, 158, 255, 0.2);
-        }
-
-        .menu-trigger .nav-icon-wrap {
-          background: linear-gradient(135deg, rgba(74, 158, 255, 0.3), rgba(74, 158, 255, 0.1));
-          border: 1px solid rgba(74, 158, 255, 0.3);
-        }
-
-        .menu-trigger.active .nav-icon-wrap {
-          background: rgba(239, 68, 68, 0.2);
-          border-color: rgba(239, 68, 68, 0.3);
-          color: #ef4444;
-        }
-
-        .nav-label {
-          font-size: 0.65rem;
-          font-weight: 500;
-        }
-
-        @media (max-width: 400px) {
-          .hex-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
+          color: var(--accent-primary, #4a9eff);
         }
       `}</style>
     </div>

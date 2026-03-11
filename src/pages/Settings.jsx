@@ -3,277 +3,477 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useStore } from '../store/useStore'
 import {
-    ArrowLeft, Palette, Moon, Sun, Zap, Volume2, Bell,
-    Shield, Download, Trash2, Check
+  ArrowLeft, Palette, Moon, Sun, Zap, Volume2, Bell,
+  Shield, Download, Trash2, Check, MapPin
 } from 'lucide-react'
+import { CALCULATION_METHODS } from '../services/aladhanApi'
 
 // Available themes
 const themes = [
-    {
-        key: 'cyber',
-        name: 'Cyberpunk',
-        accent: '#4a9eff',
-        bg: '#0a1a1a',
-        description: 'Sci-fi teal & cyan'
-    },
-    {
-        key: 'neon',
-        name: 'Neon Purple',
-        accent: '#a855f7',
-        bg: '#0a0a14',
-        description: 'Vibrant purple glow'
-    },
-    {
-        key: 'emerald',
-        name: 'Emerald',
-        accent: '#22c55e',
-        bg: '#0a140a',
-        description: 'Matrix green vibes'
-    },
-    {
-        key: 'sakura',
-        name: 'Sakura',
-        accent: '#ec4899',
-        bg: '#140a10',
-        description: 'Soft pink aesthetic'
-    },
-    {
-        key: 'amber',
-        name: 'Amber',
-        accent: '#f59e0b',
-        bg: '#14100a',
-        description: 'Warm golden tones'
-    },
-    {
-        key: 'arctic',
-        name: 'Arctic',
-        accent: '#06b6d4',
-        bg: '#0a1214',
-        description: 'Cool ice blue'
-    },
-    {
-        key: 'blood',
-        name: 'Crimson',
-        accent: '#ef4444',
-        bg: '#140a0a',
-        description: 'Dark red intensity'
-    },
-    {
-        key: 'mono',
-        name: 'Monochrome',
-        accent: '#a1a1aa',
-        bg: '#0a0a0a',
-        description: 'Clean grayscale'
-    },
+  {
+    key: 'cyber',
+    name: 'Cyberpunk',
+    accent: '#4a9eff',
+    bg: '#0a1a1a',
+    description: 'Sci-fi teal & cyan'
+  },
+  {
+    key: 'neon',
+    name: 'Neon Purple',
+    accent: '#a855f7',
+    bg: '#0a0a14',
+    description: 'Vibrant purple glow'
+  },
+  {
+    key: 'emerald',
+    name: 'Emerald',
+    accent: '#22c55e',
+    bg: '#0a140a',
+    description: 'Matrix green vibes'
+  },
+  {
+    key: 'sakura',
+    name: 'Sakura',
+    accent: '#ec4899',
+    bg: '#140a10',
+    description: 'Soft pink aesthetic'
+  },
+  {
+    key: 'amber',
+    name: 'Amber',
+    accent: '#f59e0b',
+    bg: '#14100a',
+    description: 'Warm golden tones'
+  },
+  {
+    key: 'arctic',
+    name: 'Arctic',
+    accent: '#06b6d4',
+    bg: '#0a1214',
+    description: 'Cool ice blue'
+  },
+  {
+    key: 'blood',
+    name: 'Crimson',
+    accent: '#ef4444',
+    bg: '#140a0a',
+    description: 'Dark red intensity'
+  },
+  {
+    key: 'mono',
+    name: 'Monochrome',
+    accent: '#a1a1aa',
+    bg: '#0a0a0a',
+    description: 'Clean grayscale'
+  },
+  {
+    key: 'lyna',
+    name: 'Lyna',
+    accent: '#977DFF',
+    bg: '#00033D',
+    description: 'Deep cosmic dream'
+  },
+  {
+    key: 'mindful',
+    name: 'Mindful',
+    accent: '#A77693',
+    bg: '#0F2D4D',
+    description: 'Serene stone & ocean'
+  },
+  {
+    key: 'nature',
+    name: 'Nature',
+    accent: '#E3EF26',
+    bg: '#06231D',
+    description: 'Lush forest canopy'
+  },
+  {
+    key: 'vibrant',
+    name: 'Vibrant',
+    accent: '#E02F75',
+    bg: '#050C38',
+    description: 'Electric magenta heart'
+  },
+  {
+    key: 'forest',
+    name: 'Forest',
+    accent: '#BDCDCF',
+    bg: '#034C36',
+    description: 'Teal mist & shadows'
+  },
+]
+
+const fonts = [
+  { key: 'default', name: 'Minimalist', description: 'Clean & Modern (Inter)', family: "'Inter', sans-serif" },
+  { key: 'fantasy', name: 'Nord (Fantasy)', description: 'Ancient Runic Vibes', family: "'MedievalSharp', cursive" },
+  { key: 'pixel', name: 'Pixel (Classic)', description: '8-bit Retro Style', family: "'Press Start 2P', system-ui" },
+  { key: 'stray', name: 'Symbolic', description: 'Alien/Abstract Symbols', family: "'Major Mono Display', monospace" },
+  { key: 'minimal', name: 'Grotesk', description: 'Sophisticated Sans', family: "'Host Grotesk', sans-serif" },
 ]
 
 export default function Settings() {
-    const { user, updateUser, resetStore } = useStore()
-    const [currentTheme, setCurrentTheme] = useState(user.theme || 'cyber')
-    const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const { user, setUser, resetStore, setUserLocation, setPrayerTimesData } = useStore()
+  const [currentTheme, setCurrentTheme] = useState(user.theme || 'cyber')
+  const [currentFont, setCurrentFont] = useState(user.font || 'default')
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [locationCity, setLocationCity] = useState(user?.userLocation?.city || '')
+  const [locationCountry, setLocationCountry] = useState(user?.userLocation?.country || '')
+  const [calculationMethod, setCalculationMethod] = useState(user?.userLocation?.calculationMethod || 4)
 
-    const applyTheme = (themeKey) => {
-        const theme = themes.find(t => t.key === themeKey)
-        if (theme) {
-            setCurrentTheme(themeKey)
-            updateUser({ theme: themeKey })
+  // Alias setUser as updateUser for consistency with rest of app
+  const updateUser = setUser
 
-            // Apply CSS variables
-            document.documentElement.style.setProperty('--accent-primary', theme.accent)
-            document.documentElement.style.setProperty('--accent-glow', `${theme.accent}66`)
-            document.documentElement.style.setProperty('--bg-primary', theme.bg)
-        }
+  const applyTheme = (themeKey) => {
+    const theme = themes.find(t => t.key === themeKey)
+    if (theme) {
+      setCurrentTheme(themeKey)
+      updateUser({ theme: themeKey })
+
+      // Apply CSS variables
+      document.documentElement.style.setProperty('--accent-primary', theme.accent)
+      document.documentElement.style.setProperty('--accent-glow', `${theme.accent}66`)
+      document.documentElement.style.setProperty('--bg-primary', theme.bg)
     }
+  }
 
-    const handleReset = () => {
-        if (showResetConfirm) {
-            resetStore()
-            window.location.reload()
-        } else {
-            setShowResetConfirm(true)
-            setTimeout(() => setShowResetConfirm(false), 3000)
-        }
+  const applyFont = (fontKey) => {
+    const font = fonts.find(f => f.key === fontKey)
+    if (font) {
+      setCurrentFont(fontKey)
+      updateUser({ font: fontKey })
+
+      // Apply CSS variable
+      document.documentElement.style.setProperty('--font-primary', font.family)
+      if (fontKey === 'fantasy' || fontKey === 'pixel' || fontKey === 'stray') {
+        document.documentElement.style.setProperty('--font-display', font.family)
+      } else {
+        document.documentElement.style.setProperty('--font-display', "'Orbitron', monospace")
+      }
     }
+  }
 
-    return (
-        <div className="settings-page">
-            {/* Header */}
-            <header className="settings-header">
-                <Link to="/" className="back-btn">
-                    <ArrowLeft size={20} />
-                </Link>
-                <h1>Settings</h1>
-                <div style={{ width: 40 }} />
-            </header>
+  const handleReset = () => {
+    if (showResetConfirm) {
+      resetStore()
+      window.location.reload()
+    } else {
+      setShowResetConfirm(true)
+      setTimeout(() => setShowResetConfirm(false), 3000)
+    }
+  }
 
-            <main className="settings-content">
-                {/* Theme Selection */}
-                <section className="settings-section">
-                    <div className="section-header">
-                        <Palette size={20} />
-                        <h2>Theme</h2>
-                    </div>
+  const handleSaveLocation = () => {
+    if (locationCity && locationCountry) {
+      setUserLocation({
+        city: locationCity,
+        country: locationCountry,
+        calculationMethod: calculationMethod,
+      })
+      // Clear cached prayer times to force refresh
+      setPrayerTimesData(null)
+    }
+  }
 
-                    <div className="theme-grid">
-                        {themes.map((theme) => (
-                            <motion.button
-                                key={theme.key}
-                                className={`theme-card ${currentTheme === theme.key ? 'active' : ''}`}
-                                onClick={() => applyTheme(theme.key)}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                style={{ '--theme-accent': theme.accent, '--theme-bg': theme.bg }}
-                            >
-                                <div className="theme-preview">
-                                    <div className="preview-circle" />
-                                    <div className="preview-bars">
-                                        <div className="preview-bar" />
-                                        <div className="preview-bar short" />
-                                    </div>
-                                </div>
-                                <div className="theme-info">
-                                    <span className="theme-name">{theme.name}</span>
-                                    <span className="theme-desc">{theme.description}</span>
-                                </div>
-                                {currentTheme === theme.key && (
-                                    <div className="theme-check">
-                                        <Check size={16} />
-                                    </div>
-                                )}
-                            </motion.button>
-                        ))}
-                    </div>
-                </section>
 
-                {/* Mode Selection */}
-                <section className="settings-section">
-                    <div className="section-header">
-                        <Zap size={20} />
-                        <h2>Mode</h2>
-                    </div>
 
-                    <div className="mode-grid">
-                        <button
-                            className={`mode-card ${user.mode === 'basic' ? 'active' : ''}`}
-                            onClick={() => updateUser({ mode: 'basic' })}
-                        >
-                            <div className="mode-icon">📱</div>
-                            <div className="mode-info">
-                                <span className="mode-name">Basic</span>
-                                <span className="mode-desc">Simple, clean interface with essential features</span>
-                            </div>
-                            {user.mode === 'basic' && <div className="mode-check"><Check size={16} /></div>}
-                        </button>
+  return (
+    <div className="settings-page">
+      {/* Header */}
+      <header className="settings-header">
+        <Link to="/" className="back-btn">
+          <ArrowLeft size={20} />
+        </Link>
+        <h1>Settings</h1>
+        <div style={{ width: 40 }} />
+      </header>
 
-                        <button
-                            className={`mode-card ${user.mode === 'advanced' ? 'active' : ''}`}
-                            onClick={() => updateUser({ mode: 'advanced' })}
-                        >
-                            <div className="mode-icon">🎮</div>
-                            <div className="mode-info">
-                                <span className="mode-name">Advanced</span>
-                                <span className="mode-desc">Full game UI with stats, menus & animations</span>
-                            </div>
-                            {user.mode === 'advanced' && <div className="mode-check"><Check size={16} /></div>}
-                        </button>
-                    </div>
-                </section>
+      <main className="settings-content">
+        {/* Theme Selection */}
+        <section className="settings-section">
+          <div className="section-header">
+            <Palette size={20} />
+            <h2>Theme</h2>
+          </div>
 
-                {/* Display Settings */}
-                <section className="settings-section">
-                    <div className="section-header">
-                        <Sun size={20} />
-                        <h2>Display</h2>
-                    </div>
-
-                    <div className="settings-list">
-                        <div className="setting-item">
-                            <div className="setting-info">
-                                <Moon size={18} />
-                                <span>Dark Mode</span>
-                            </div>
-                            <div className="toggle active">
-                                <div className="toggle-knob" />
-                            </div>
-                        </div>
-
-                        <div className="setting-item">
-                            <div className="setting-info">
-                                <Zap size={18} />
-                                <span>Animations</span>
-                            </div>
-                            <div className="toggle active">
-                                <div className="toggle-knob" />
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Notifications */}
-                <section className="settings-section">
-                    <div className="section-header">
-                        <Bell size={20} />
-                        <h2>Notifications</h2>
-                    </div>
-
-                    <div className="settings-list">
-                        <div className="setting-item">
-                            <div className="setting-info">
-                                <Bell size={18} />
-                                <span>Push Notifications</span>
-                            </div>
-                            <div className="toggle">
-                                <div className="toggle-knob" />
-                            </div>
-                        </div>
-
-                        <div className="setting-item">
-                            <div className="setting-info">
-                                <Volume2 size={18} />
-                                <span>Sound Effects</span>
-                            </div>
-                            <div className="toggle">
-                                <div className="toggle-knob" />
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Data */}
-                <section className="settings-section">
-                    <div className="section-header">
-                        <Shield size={20} />
-                        <h2>Data</h2>
-                    </div>
-
-                    <div className="settings-list">
-                        <button className="setting-item clickable">
-                            <div className="setting-info">
-                                <Download size={18} />
-                                <span>Export Data</span>
-                            </div>
-                        </button>
-
-                        <button
-                            className={`setting-item clickable danger ${showResetConfirm ? 'confirming' : ''}`}
-                            onClick={handleReset}
-                        >
-                            <div className="setting-info">
-                                <Trash2 size={18} />
-                                <span>{showResetConfirm ? 'Click again to confirm' : 'Reset All Data'}</span>
-                            </div>
-                        </button>
-                    </div>
-                </section>
-
-                {/* App Info */}
-                <div className="app-info">
-                    <span className="app-name">AFTERLIFE</span>
-                    <span className="app-version">Version 1.0.0</span>
+          <div className="theme-grid">
+            {themes.map((theme) => (
+              <motion.button
+                key={theme.key}
+                className={`theme-card ${currentTheme === theme.key ? 'active' : ''}`}
+                onClick={() => applyTheme(theme.key)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                style={{ '--theme-accent': theme.accent, '--theme-bg': theme.bg }}
+              >
+                <div className="theme-preview">
+                  <div className="preview-circle" />
+                  <div className="preview-bars">
+                    <div className="preview-bar" />
+                    <div className="preview-bar short" />
+                  </div>
                 </div>
-            </main>
+                <div className="theme-info">
+                  <span className="theme-name">{theme.name}</span>
+                  <span className="theme-desc">{theme.description}</span>
+                </div>
+                {currentTheme === theme.key && (
+                  <div className="theme-check">
+                    <Check size={16} />
+                  </div>
+                )}
+              </motion.button>
+            ))}
+          </div>
+        </section>
 
-            <style>{`
+        {/* Font Selection */}
+        <section className="settings-section">
+          <div className="section-header">
+            <Palette size={20} />
+            <h2>Typography</h2>
+          </div>
+
+          <div className="grid grid-cols-2 gap-md">
+            {fonts.map((font) => (
+              <motion.button
+                key={font.key}
+                className={`font-card glass-card ${currentFont === font.key ? 'active' : ''}`}
+                onClick={() => applyFont(font.key)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  fontFamily: font.family,
+                  border: currentFont === font.key ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+                  padding: 'var(--space-md)',
+                  textAlign: 'left',
+                  position: 'relative'
+                }}
+              >
+                <div className="font-info">
+                  <span className="font-name" style={{ display: 'block', fontSize: '1.1rem', marginBottom: '4px' }}>
+                    {font.name}
+                  </span>
+                  <span className="font-desc text-xs text-secondary">
+                    {font.description}
+                  </span>
+                </div>
+                {currentFont === font.key && (
+                  <div className="theme-check" style={{ position: 'absolute', top: '10px', right: '10px' }}>
+                    <Check size={16} color="var(--accent-primary)" />
+                  </div>
+                )}
+              </motion.button>
+            ))}
+          </div>
+        </section>
+
+        {/* Prayer Location Settings (Islam only) */}
+        {user?.religion === 'islam' && (
+          <section className="settings-section">
+            <div className="section-header">
+              <MapPin size={20} />
+              <h2>Prayer Location</h2>
+            </div>
+
+            <div className="location-settings">
+              <div className="location-inputs">
+                <div className="input-group">
+                  <label>City</label>
+                  <input
+                    type="text"
+                    value={locationCity}
+                    onChange={(e) => setLocationCity(e.target.value)}
+                    placeholder="e.g., Makkah"
+                    className="location-input"
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Country</label>
+                  <input
+                    type="text"
+                    value={locationCountry}
+                    onChange={(e) => setLocationCountry(e.target.value)}
+                    placeholder="e.g., Saudi Arabia"
+                    className="location-input"
+                  />
+                </div>
+              </div>
+
+              <div className="input-group method-group">
+                <label>Calculation Method</label>
+                <select
+                  value={calculationMethod}
+                  onChange={(e) => setCalculationMethod(Number(e.target.value))}
+                  className="method-select"
+                >
+                  {Object.entries(CALCULATION_METHODS).map(([key, method]) => (
+                    <option key={key} value={method.id}>
+                      {method.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                className="save-location-btn"
+                onClick={handleSaveLocation}
+                disabled={!locationCity || !locationCountry}
+              >
+                Save Location
+              </button>
+
+              {user?.userLocation?.city && (
+                <p className="current-location">
+                  Current: {user.userLocation.city}, {user.userLocation.country}
+                </p>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Mode Selection */}
+        <section className="settings-section">
+          <div className="section-header">
+            <Zap size={20} />
+            <h2>Mode</h2>
+          </div>
+
+          <div className="mode-grid">
+            <button
+              className={`mode-card ${user.mode === 'basic' ? 'active' : ''}`}
+              onClick={() => updateUser({ mode: 'basic' })}
+            >
+              <div className="mode-icon">📱</div>
+              <div className="mode-info">
+                <span className="mode-name">Basic</span>
+                <span className="mode-desc">Simple, clean interface with essential features</span>
+              </div>
+              {user.mode === 'basic' && <div className="mode-check"><Check size={16} /></div>}
+            </button>
+
+            <button
+              className={`mode-card ${user.mode === 'advanced' ? 'active' : ''}`}
+              onClick={() => updateUser({ mode: 'advanced' })}
+            >
+              <div className="mode-icon">🎮</div>
+              <div className="mode-info">
+                <span className="mode-name">Advanced</span>
+                <span className="mode-desc">Full game UI with stats, menus & animations</span>
+              </div>
+              {user.mode === 'advanced' && <div className="mode-check"><Check size={16} /></div>}
+            </button>
+          </div>
+        </section>
+
+        {/* Display Settings */}
+        <section className="settings-section">
+          <div className="section-header">
+            <Sun size={20} />
+            <h2>Display</h2>
+          </div>
+
+          <div className="settings-list">
+            <div className="setting-item">
+              <div className="setting-info">
+                <Moon size={18} />
+                <span>Dark Mode</span>
+              </div>
+              <div className="toggle active">
+                <div className="toggle-knob" />
+              </div>
+            </div>
+
+            <div className="setting-item">
+              <div className="setting-info">
+                <Zap size={18} />
+                <span>Animations</span>
+              </div>
+              <div className="toggle active">
+                <div className="toggle-knob" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Notifications */}
+        <section className="settings-section">
+          <div className="section-header">
+            <Bell size={20} />
+            <h2>Notifications</h2>
+          </div>
+
+          <div className="settings-list">
+            <div className="setting-item">
+              <div className="setting-info">
+                <Bell size={18} />
+                <span>Push Notifications</span>
+              </div>
+              <div className="toggle">
+                <div className="toggle-knob" />
+              </div>
+            </div>
+
+            <div className="setting-item">
+              <div className="setting-info">
+                <Volume2 size={18} />
+                <span>Sound Effects</span>
+              </div>
+              <div className="toggle">
+                <div className="toggle-knob" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Data */}
+        <section className="settings-section">
+          <div className="section-header">
+            <Shield size={20} />
+            <h2>Data</h2>
+          </div>
+
+          <div className="settings-list">
+            <button className="setting-item clickable">
+              <div className="setting-info">
+                <Download size={18} />
+                <span>Export Data</span>
+              </div>
+            </button>
+
+            <button
+              className={`setting-item clickable danger ${showResetConfirm ? 'confirming' : ''}`}
+              onClick={handleReset}
+            >
+              <div className="setting-info">
+                <Trash2 size={18} />
+                <span>{showResetConfirm ? 'Click again to confirm' : 'Reset All Data'}</span>
+              </div>
+            </button>
+          </div>
+        </section>
+
+        {/* Logout Section */}
+        <section className="settings-section logout-section">
+          <motion.button
+            className={`logout-btn ${showResetConfirm ? 'confirming' : ''}`}
+            onClick={handleReset}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Trash2 size={20} />
+            <span>{showResetConfirm ? 'TAP AGAIN TO CONFIRM LOGOUT' : 'LOGOUT & RESET'}</span>
+          </motion.button>
+          <p className="logout-warning">This will clear all data and restart from onboarding</p>
+        </section>
+
+        {/* App Info */}
+        <div className="app-info">
+          <span className="app-name">AFTERLIFE</span>
+          <span className="app-version">Version 1.0.0</span>
+        </div>
+      </main>
+
+      <style>{`
         .settings-page {
           min-height: 100vh;
           background: var(--bg-primary);
@@ -591,7 +791,139 @@ export default function Settings() {
             grid-template-columns: 1fr;
           }
         }
+
+        /* Location Settings */
+        .location-settings {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-md);
+        }
+
+        .location-inputs {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: var(--space-md);
+        }
+
+        .input-group {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .input-group label {
+          font-size: 0.75rem;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .location-input,
+        .method-select {
+          background: var(--bg-tertiary);
+          border: 1px solid var(--border-subtle);
+          border-radius: var(--radius-md);
+          padding: 10px 12px;
+          color: var(--text-primary);
+          font-size: 0.875rem;
+          transition: border-color 0.2s;
+        }
+
+        .location-input:focus,
+        .method-select:focus {
+          outline: none;
+          border-color: var(--accent-primary);
+        }
+
+        .method-select {
+          cursor: pointer;
+        }
+
+        .method-select option {
+          background: var(--bg-secondary);
+          color: var(--text-primary);
+        }
+
+        .save-location-btn {
+          background: var(--accent-primary);
+          color: white;
+          border: none;
+          padding: 12px 24px;
+          border-radius: var(--radius-md);
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          margin-top: var(--space-sm);
+        }
+
+        .save-location-btn:hover:not(:disabled) {
+          filter: brightness(1.1);
+        }
+
+        .save-location-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .current-location {
+          font-size: 0.75rem;
+          color: var(--text-tertiary);
+          text-align: center;
+        }
+
+        @media (max-width: 500px) {
+          .location-inputs {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        /* Logout Button */
+        .logout-section {
+          text-align: center;
+          padding: var(--space-lg);
+        }
+
+        .logout-btn {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          background: linear-gradient(135deg, #ef4444, #dc2626);
+          color: white;
+          border: none;
+          padding: 16px 24px;
+          border-radius: var(--radius-md);
+          font-size: 1rem;
+          font-weight: 700;
+          letter-spacing: 1px;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .logout-btn:hover {
+          filter: brightness(1.1);
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .logout-btn.confirming {
+          background: linear-gradient(135deg, #f97316, #ea580c);
+          animation: pulse-warning 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse-warning {
+          from { box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3); }
+          to { box-shadow: 0 4px 25px rgba(249, 115, 22, 0.6); }
+        }
+
+        .logout-warning {
+          font-size: 0.75rem;
+          color: var(--text-tertiary);
+          margin-top: var(--space-sm);
+        }
       `}</style>
-        </div>
-    )
+    </div>
+  )
 }

@@ -1,42 +1,87 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Filter, Clock, Calendar, Activity } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import PulseGraph from '../components/PulseGraph'
 
-export default function Timeline() {
-    const { user, getTimeline } = useStore()
-    const timeline = getTimeline() // Get aggregated feed
-    const [filter, setFilter] = useState('all') // all, cerebra, elysia, etc.
-    const [timeScale, setTimeScale] = useState('week') // day, week, month, year
+const AGE_UNITS = [
+    { key: 's', label: 'SEC', factor: 1 / 1000 },
+    { key: 'm', label: 'MIN', factor: 1 / 60000 },
+    { key: 'h', label: 'HRS', factor: 1 / 3600000 },
+    { key: 'd', label: 'DAYS', factor: 1 / 86400000 },
+    { key: 'M', label: 'MONTHS', factor: 1 / (86400000 * 30.44) },
+    { key: 'y', label: 'YEARS', factor: 1 / (86400000 * 365.25) },
+    { key: 'c', label: 'CENTS', factor: 1 / (86400000 * 365.25 * 100) },
+]
 
-    // Age Calculation "Memento Mori"
-    const [timeLived, setTimeLived] = useState({ years: 0, days: 0, hours: 0, progress: 0 })
+export default function Timeline() {
+    const { user, getTimeline, getLifeExpectancy } = useStore()
+    const timeline = getTimeline()
+    const [filter, setFilter] = useState('all')
+    const [timeScale, setTimeScale] = useState('week')
+    const [ageUnit, setAgeUnit] = useState('y') // drillable unit
+
+    const lifeExpectancy = getLifeExpectancy ? getLifeExpectancy() : (user.lifeExpectancy || 80)
+
+    // Age & Life Path calculation
+    const [timeLived, setTimeLived] = useState({
+        years: 0, months: 0, days: 0, hours: 0,
+        totalMs: 0, progress: 0, progressColor: '#4a9eff',
+        remaining: { years: 0, months: 0, days: 0 },
+        weeksRemaining: 0,
+    })
 
     useEffect(() => {
         if (!user.birthDate) return
 
         const calculateTime = () => {
             const birth = new Date(user.birthDate)
+            if (user.birthTime) {
+                const [h, m] = user.birthTime.split(':').map(Number)
+                birth.setHours(h, m, 0, 0)
+            }
             const now = new Date()
-            const diff = now - birth
+            const diffMs = now - birth
+            if (diffMs < 0) return
 
-            const years = Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25))
-            const days = Math.floor((diff % (1000 * 60 * 60 * 24 * 365.25)) / (1000 * 60 * 60 * 24))
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+            const totalLifeMs = lifeExpectancy * 365.25 * 24 * 60 * 60 * 1000
+            const progress = Math.min(100, (diffMs / totalLifeMs) * 100)
+            const remainingMs = Math.max(0, totalLifeMs - diffMs)
+            const rYears = Math.floor(remainingMs / (86400000 * 365.25))
+            const rDays = Math.floor((remainingMs % (86400000 * 365.25)) / 86400000)
+            const rMonths = Math.floor(rDays / 30.44)
+            const weeksRemaining = Math.floor(remainingMs / (86400000 * 7))
 
-            // Life Progress
-            const totalLifeMs = user.lifeExpectancy * 365.25 * 24 * 60 * 60 * 1000
-            const progress = Math.min(100, (diff / totalLifeMs) * 100)
+            const years = Math.floor(diffMs / (86400000 * 365.25))
+            const rem = diffMs - years * 86400000 * 365.25
+            const months = Math.floor(rem / (86400000 * 30.44))
+            const days = Math.floor((rem % (86400000 * 30.44)) / 86400000)
+            const hours = Math.floor((diffMs % 86400000) / 3600000)
 
-            setTimeLived({ years, days, hours, progress })
+            const pct = 100 - progress
+            const progressColor = pct < 10 ? '#ef4444' : pct < 30 ? '#f59e0b' : 'var(--accent-primary, #4a9eff)'
+
+            setTimeLived({
+                years, months, days, hours, totalMs: diffMs,
+                progress, progressColor,
+                remaining: { years: rYears, months: rMonths, days: rDays },
+                weeksRemaining,
+            })
         }
 
         calculateTime()
-        const interval = setInterval(calculateTime, 60000) // Update every minute
+        const interval = setInterval(calculateTime, 1000) // Update every second for live counter
         return () => clearInterval(interval)
-    }, [user.birthDate, user.lifeExpectancy])
+    }, [user.birthDate, user.birthTime, lifeExpectancy])
+
+    // Compute drillable age number
+    const drillableAge = useMemo(() => {
+        if (!timeLived.totalMs) return '—'
+        const unit = AGE_UNITS.find(u => u.key === ageUnit)
+        const val = timeLived.totalMs * unit.factor
+        return val >= 1000 ? Math.floor(val).toLocaleString() : val.toFixed(2)
+    }, [timeLived.totalMs, ageUnit])
 
     // Filter Logic
     const filteredEvents = timeline.filter(item => {
@@ -98,26 +143,69 @@ export default function Timeline() {
                         <h1 className="text-xl font-display tracking-widest">CHRONOS</h1>
                     </div>
 
-                    {/* Memento Mori Clock */}
-                    <div className="memento-mori glass-card p-md mb-md flex items-center justify-between">
-                        <div className="flex flex-col">
-                            <span className="text-xs text-secondary uppercase tracking-wider">Time Lived</span>
-                            <div className="text-2xl font-mono font-bold text-accent">
-                                {timeLived.years}y {timeLived.days}d {timeLived.hours}h
+                    {/* CHRONOS HERO — Drillable Age Counter */}
+                    <div className="chronos-hero glass-card p-lg mb-md">
+                        {/* Unit selector pills */}
+                        <div className="age-unit-row">
+                            {AGE_UNITS.map(u => (
+                                <button
+                                    key={u.key}
+                                    onClick={() => setAgeUnit(u.key)}
+                                    className={`age-unit-pill ${ageUnit === u.key ? 'active' : ''}`}
+                                >
+                                    {u.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Big animated number */}
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={ageUnit}
+                                initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                transition={{ duration: 0.2 }}
+                                className="chronos-number"
+                            >
+                                {drillableAge}
+                            </motion.div>
+                        </AnimatePresence>
+                        <div className="chronos-unit-label">
+                            {AGE_UNITS.find(u => u.key === ageUnit)?.label} ALIVE
+                        </div>
+
+                        {/* Dual Life Path Panel */}
+                        <div className="life-path-dual">
+                            <div className="life-path-side lived">
+                                <span className="life-path-label">TIME LIVED</span>
+                                <span className="life-path-main">{timeLived.years}Y {timeLived.months}M {timeLived.days}D</span>
+                                <span className="life-path-sub">{timeLived.years > 0 ? (timeLived.years * 365 + timeLived.days).toLocaleString() : '—'} days</span>
+                            </div>
+                            <div className="life-path-divider" />
+                            <div className="life-path-side remaining">
+                                <span className="life-path-label">TIME REMAINING</span>
+                                <span className="life-path-main" style={{ color: timeLived.progressColor }}>
+                                    ~{timeLived.remaining.years}Y {timeLived.remaining.months}M
+                                </span>
+                                <span className="life-path-sub">{timeLived.weeksRemaining.toLocaleString()} weeks</span>
                             </div>
                         </div>
-                        <div className="flex-1 mx-xl">
-                            <div className="flex justify-between text-xs text-secondary mb-xs">
+
+                        {/* Progress bar */}
+                        <div className="life-progress-wrap">
+                            <div className="flex justify-between text-xs mb-xs" style={{ opacity: 0.5 }}>
                                 <span>Birth</span>
-                                <span>{timeLived.progress.toFixed(4)}%</span>
-                                <span>{user.lifeExpectancy}y Est.</span>
+                                <span style={{ color: timeLived.progressColor }}>{timeLived.progress.toFixed(2)}%</span>
+                                <span>~{lifeExpectancy}y est. <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>auto</span></span>
                             </div>
-                            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
                                 <motion.div
-                                    className="h-full bg-accent"
+                                    className="h-full rounded-full"
+                                    style={{ background: timeLived.progressColor }}
                                     initial={{ width: 0 }}
                                     animate={{ width: `${timeLived.progress}%` }}
-                                    transition={{ duration: 1.5, ease: "easeOut" }}
+                                    transition={{ duration: 1.5, ease: 'easeOut' }}
                                 />
                             </div>
                         </div>

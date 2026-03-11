@@ -5,7 +5,7 @@ import { useStore } from '../store/useStore'
 import { ArrowLeft, Plus, Star, Sun, Moon, Compass } from 'lucide-react'
 
 export default function Sanctum() {
-    const { realms, addRealmEntry, updateRealmBalance } = useStore()
+    const { realms, addRealmEntry } = useStore()
     const realm = realms.sanctum
     const [showAddEntry, setShowAddEntry] = useState(false)
     const [newEntry, setNewEntry] = useState({ title: '', content: '', type: 'reflection' })
@@ -13,7 +13,6 @@ export default function Sanctum() {
     const handleAddEntry = () => {
         if (newEntry.title.trim()) {
             addRealmEntry('sanctum', newEntry)
-            updateRealmBalance('sanctum', Math.min(100, realm.balance + 5))
             setNewEntry({ title: '', content: '', type: 'reflection' })
             setShowAddEntry(false)
         }

@@ -24,7 +24,7 @@ export default function ReligionWidget() {
 
     // Calculate today's prayer progress
     const prayerTypes = getPrayerTypes(religion)
-    const todayPrayers = user?.prayerLog?.filter(p => p.completedAt.startsWith(today)) || []
+    const todayPrayers = user?.prayerLog?.filter(p => p.completedAt?.startsWith(today)) || []
     const completedPrayers = prayerTypes.filter(p => todayPrayers.some(tp => tp.type === p.id)).length
     const totalPrayers = prayerTypes.length
     const prayerPercent = Math.round((completedPrayers / totalPrayers) * 100)

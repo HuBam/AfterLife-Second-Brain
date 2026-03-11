@@ -5,7 +5,7 @@ import { useStore } from '../store/useStore'
 import { ArrowLeft, Plus, Brain, BookOpen, Lightbulb, Target, Star } from 'lucide-react'
 
 export default function Cerebra() {
-  const { realms, addRealmEntry, updateRealmBalance } = useStore()
+  const { realms, addRealmEntry } = useStore()
   const realm = realms.cerebra
   const [showAddEntry, setShowAddEntry] = useState(false)
   const [newEntry, setNewEntry] = useState({ title: '', content: '', type: 'skill' })
@@ -13,7 +13,6 @@ export default function Cerebra() {
   const handleAddEntry = () => {
     if (newEntry.title.trim()) {
       addRealmEntry('cerebra', newEntry)
-      updateRealmBalance('cerebra', Math.min(100, realm.balance + 5))
       setNewEntry({ title: '', content: '', type: 'skill' })
       setShowAddEntry(false)
     }

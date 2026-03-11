@@ -102,12 +102,19 @@ export const talents = [
     { id: 'visionary', name: 'Visionary', description: 'Sees possibilities others miss', icon: '🔮', rarity: 'epic', mbtiTypes: ['INFJ', 'INTJ', 'ENFJ', 'ENFP'] },
     { id: 'performer', name: 'Performer', description: 'Natural entertainer and social butterfly', icon: '🎭', rarity: 'rare', mbtiTypes: ['ESFP', 'ENFP', 'ESTP'] },
     { id: 'analyst', name: 'Analyst', description: 'Logical thinker with keen attention to detail', icon: '🔬', rarity: 'rare', mbtiTypes: ['ISTJ', 'INTP', 'ISTP'] },
+    { id: 'mediator', name: 'Mediator', description: 'Natural peacemaker and conflict resolver', icon: '🕊️', rarity: 'rare', mbtiTypes: ['INFP', 'ISFP', 'ENFP'] },
+
+    // Enneagram-based talents
+    { id: 'perfectionist', name: 'Perfectionist', description: 'Driven by high standards and order', icon: '✨', rarity: 'rare', enneagramTypes: [1] },
+    { id: 'altruist', name: 'Altruist', description: 'Gains fulfillment by helping others', icon: '🎁', rarity: 'rare', enneagramTypes: [2] },
+    { id: 'investigator', name: 'Investigator', description: 'Thirst for knowledge and understanding', icon: '🔍', rarity: 'rare', enneagramTypes: [5] },
 
     // Skill-based talents
     { id: 'polyglot', name: 'Polyglot', description: 'Master of multiple languages', icon: '🗣️', rarity: 'epic', skillRequired: { category: 'language', minHours: 100 } },
     { id: 'artist', name: 'Artist', description: 'Creative visual expression mastery', icon: '🎨', rarity: 'rare', skillRequired: { category: 'creative', minHours: 50 } },
     { id: 'athlete', name: 'Athlete', description: 'Physical prowess and endurance', icon: '🏃', rarity: 'rare', skillRequired: { category: 'fitness', minHours: 100 } },
     { id: 'scholar', name: 'Scholar', description: 'Deep knowledge seeker', icon: '📖', rarity: 'epic', skillRequired: { category: 'learning', minHours: 200 } },
+    { id: 'coder', name: 'Neural Architect', description: 'Master of complex logical systems', icon: '💻', rarity: 'legendary', skillRequired: { category: 'programming', minHours: 250 } },
 
     // Special talents
     { id: 'night_owl', name: 'Night Owl', description: 'Most productive after midnight', icon: '🦉', rarity: 'common', special: 'night_entries' },
@@ -122,7 +129,7 @@ export const checkAchievementUnlock = (achievement, userData) => {
 
     switch (unlockCondition.type) {
         case 'entries':
-            const totalEntries = Object.values(realms).reduce((sum, r) => sum + r.entries.length, 0)
+            const totalEntries = Object.values(realms || {}).reduce((sum, r) => sum + (r?.entries?.length || 0), 0)
             return totalEntries >= unlockCondition.count
 
         case 'streak':
@@ -189,6 +196,11 @@ export const checkTalentUnlock = (talent, userData) => {
     // MBTI-based talent
     if (talent.mbtiTypes && user.mbti) {
         return talent.mbtiTypes.includes(user.mbti)
+    }
+
+    // Enneagram-based talent
+    if (talent.enneagramTypes && user.enneagram) {
+        return talent.enneagramTypes.includes(Number(user.enneagram))
     }
 
     // Skill-based talent

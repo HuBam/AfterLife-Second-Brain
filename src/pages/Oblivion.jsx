@@ -5,7 +5,7 @@ import { useStore } from '../store/useStore'
 import { ArrowLeft, Plus, Shield, Zap, AlertTriangle, Trophy } from 'lucide-react'
 
 export default function Oblivion() {
-    const { realms, addRealmEntry, updateRealmBalance } = useStore()
+    const { realms, addRealmEntry } = useStore()
     const realm = realms.oblivion
     const [showAddEntry, setShowAddEntry] = useState(false)
     const [newEntry, setNewEntry] = useState({ title: '', content: '', type: 'challenge' })
@@ -13,7 +13,6 @@ export default function Oblivion() {
     const handleAddEntry = () => {
         if (newEntry.title.trim()) {
             addRealmEntry('oblivion', newEntry)
-            updateRealmBalance('oblivion', Math.min(100, realm.balance + 5))
             setNewEntry({ title: '', content: '', type: 'challenge' })
             setShowAddEntry(false)
         }

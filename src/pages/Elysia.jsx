@@ -5,7 +5,7 @@ import { useStore } from '../store/useStore'
 import { ArrowLeft, Plus, Palette, Sparkles, Wand2, Folder } from 'lucide-react'
 
 export default function Elysia() {
-    const { realms, addRealmEntry, updateRealmBalance } = useStore()
+    const { realms, addRealmEntry } = useStore()
     const realm = realms.elysia
     const [showAddEntry, setShowAddEntry] = useState(false)
     const [newEntry, setNewEntry] = useState({ title: '', content: '', type: 'project' })
@@ -13,7 +13,6 @@ export default function Elysia() {
     const handleAddEntry = () => {
         if (newEntry.title.trim()) {
             addRealmEntry('elysia', newEntry)
-            updateRealmBalance('elysia', Math.min(100, realm.balance + 5))
             setNewEntry({ title: '', content: '', type: 'project' })
             setShowAddEntry(false)
         }
