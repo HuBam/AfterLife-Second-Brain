@@ -3,6 +3,15 @@
 
 ---
 
+## 🌐 Cross-Cutting Requirements
+*These apply to ALL phases and must be maintained throughout development.*
+
+- [ ] **Responsive Design** — full compatibility: phones (iOS/Android), tablets, iPad, PC, Mac. Touch-friendly targets, fluid layouts, responsive typography
+- [ ] **Copyright & Licensing** — © AfterLife — Second Brain by HuBam. Footer credit in-app + license file in repo
+- [ ] **Environment Config** — `.env` for API keys (Echo AI, Aladhan, etc.) with `.env.example` committed
+
+---
+
 ## Phase 1: Neural Foundation
 *Status: ✅ Complete*
 
@@ -92,10 +101,10 @@
 
 ---
 
-## Phase 7: Skills, Talents & XP Progression
+## Phase 7: Skills, Talents, XP & The Shadow System
 *Status: 🔲 Planned*
 
-**Goal:** Turn personal growth into an RPG progression system.
+**Goal:** Turn personal growth into an RPG progression system — with a dark counterpart.
 
 - [x] Achievements & Talents system
 - [x] Rank badges (C → SSS)
@@ -103,6 +112,18 @@
 - [ ] Full RPG Skill Tree — visual tree with level gates and unlock requirements
 - [ ] XP awarded dynamically from habit streaks, realm entries, prayer logs
 - [ ] Talent unlock animations and milestone celebrations
+
+**🌑 Shadow System — The Dark Realm:**
+- [ ] **Bad Habits Tracker** — log destructive habits that degrade the skill tree and drain XP
+- [ ] **Downgrade Mechanic** — skills regress if bad habits accumulate; visual glitch/decay/corruption effect
+- [ ] **Religion-Specific Underworlds** (adapts to user's religion setting):
+  - ☩ Christianity → 7 Deadly Sins + 10 Commandments violation tracker
+  - ☽ Islam → Major Sins (Al-Kabair) tracker with Tawbah (repentance) mechanic
+  - ✡ Judaism → Noahide Laws + 613 Mitzvot awareness
+  - ☸ Buddhism → Five Precepts violations + Karmic debt balance
+  - 🌙 Other/Spiritual → "Moon Dimension" — shadow energy, negative karma scale
+- [ ] **Visual Contrast** — Shadow Realm uses dark purples/reds, glitch effects, smoky particles; opposite of the clean neon skill tree
+- [ ] **Redemption Arc** — positive habits and prayers can cleanse shadow points and restore skill tree
 
 ---
 

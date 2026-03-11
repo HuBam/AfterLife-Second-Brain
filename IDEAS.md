@@ -12,13 +12,45 @@
 
 ---
 
+## 🌑 Shadow System — The Dark Realm
+
+> The anti-skill tree. Where bad habits, vices, and sins pull you downward. A completely different visual vibe — dark, corrupted, ominous — contrasting the light skill tree.
+
+- [ ] **Bad Habits Tracker** — log destructive habits (the inverse of positive habits). Each bad habit logged degrades the skill tree visually and reduces XP
+- [ ] **The Downgrade System** — skills can regress if bad habits pile up; visual corruption effect on the skill tree (glitch, decay, darkness)
+- [ ] **Religion-Specific Dark Realms** — the "underworld" adapts based on your religion setting:
+  - ☩ **Christianity** → The 7 Deadly Sins (Pride, Greed, Wrath, Envy, Gluttony, Sloth, Lust) + 10 Commandments violation tracking
+  - ☽ **Islam** → Major sins (Al-Kabair) tracker — shirk, adultery, theft, etc. with Tawbah (repentance) mechanic
+  - ✡ **Judaism** → 613 Mitzvot awareness + violations of the Noahide Laws
+  - ☸ **Buddhism** → The Five Precepts violations + Karmic debt tracker
+  - 🌙 **Other / Spiritual** → Generic "Moon Dimension" — shadow energy, negative karma, karmic balance scale
+- [ ] **Visual Contrast** — Shadow Realm has a completely different aesthetic: dark purples/reds, corrupted glitch effects, smoky particles, inverted color scheme vs. the clean neon skill tree
+- [ ] **Redemption Arc** — logging positive habits/prayers can "cleanse" shadow points and restore the skill tree to its previous state
+
+---
+
 ## 🎨 UI/UX Improvements
 
+- [ ] **Responsive Design — All Devices** — full compatibility across:
+  - 📱 Phones (iOS + Android)
+  - 📱 Tablets + iPad
+  - 💻 PC (Windows/Linux)
+  - 🍎 Mac
+  - Fluid layouts, touch-friendly targets, responsive font sizing
 - [ ] **Theme System Overhaul**
   - Basic Mode: 4 options — Dark, Light, Night Blue, System
   - Advanced Mode: 16 options — all Basic themes + Space, Sea, Fire, Earth, and 8 more curated palettes
   - Custom option: build your own theme with a color picker
 - [ ] **Sound Effects (SFX) Layer** — optional audio cues for interactions, habit completions, and achievement unlocks
+
+---
+
+## ⚖️ Legal & Environment
+
+- [ ] **Copyright Notice** — add license/copyright to the project (MIT or custom)
+  - Footer credit: © 2025 AfterLife — Second Brain by HuBam
+  - Consider an about/credits page inside the app
+- [ ] **Environment Config** — `.env` setup for any API keys (Echo AI, Aladhan prayer API, etc.) with `.env.example` template committed to repo
 
 ---
 
