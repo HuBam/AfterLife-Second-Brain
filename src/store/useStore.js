@@ -231,6 +231,15 @@ export const useStore = create(
                 isTyping: false,
             },
 
+            // Neural Pulse State
+            neuralPulse: {
+                message: null,       // string | null
+                priority: 'low',     // 'low' | 'warning' | 'high'
+                linkTo: null,        // string | null — route to link to
+                linkLabel: null,     // string | null
+                lastShown: null,     // ISO timestamp — prevent spam
+            },
+
             // Actions - User
             setUser: (userData) => set((state) => ({
                 user: { ...state.user, ...userData }
@@ -520,6 +529,15 @@ export const useStore = create(
                 echo: {
                     ...state.echo,
                     isTyping
+                }
+            })),
+
+            // Actions - Neural Pulse
+            setNeuralPulse: (pulse) => set((state) => ({
+                neuralPulse: {
+                    ...state.neuralPulse,
+                    ...pulse,
+                    lastShown: pulse.message ? new Date().toISOString() : state.neuralPulse?.lastShown,
                 }
             })),
 
@@ -893,6 +911,39 @@ export const useStore = create(
                 }
             },
 
+            // Phase 2: Mood Trend — local sentiment from Empyra entries (no API needed)
+            getMoodTrend: () => {
+                const state = get()
+                const moodEntries = (state.realms?.empyra?.entries || []).filter(e => e.type === 'mood')
+
+                if (moodEntries.length < 3) {
+                    return { trend: 'insufficient', label: 'Not enough mood data', color: '#6b7280' }
+                }
+
+                const positiveWords = /\b(happy|great|good|amazing|productive|motivated|peaceful|grateful|joy|excited|calm|focused|strong|energized|content|cheerful|hopeful|positive|blessed|accomplished)\b/i
+                const negativeWords = /\b(sad|angry|anxious|stressed|tired|exhausted|overwhelmed|depressed|lost|frustrated|hopeless|worthless|empty|lonely|scared|worried|down|bad|terrible|awful|numb)\b/i
+
+                const last10 = moodEntries.slice(0, 10)
+                const scores = last10.map(entry => {
+                    const text = `${entry.title || ''} ${entry.description || ''} ${entry.content || ''}`
+                    const pos = (text.match(positiveWords) || []).length
+                    const neg = (text.match(negativeWords) || []).length
+                    return pos - neg
+                })
+
+                const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length
+                const recentHalf = scores.slice(0, Math.floor(scores.length / 2))
+                const olderHalf = scores.slice(Math.floor(scores.length / 2))
+                const recentAvg = recentHalf.reduce((a, b) => a + b, 0) / (recentHalf.length || 1)
+                const olderAvg = olderHalf.reduce((a, b) => a + b, 0) / (olderHalf.length || 1)
+                const isDeclining = olderAvg > 0.5 && recentAvg < olderAvg - 0.5
+
+                if (isDeclining) return { trend: 'declining', label: 'Mood declining', color: '#f59e0b' }
+                if (avgScore > 0.5) return { trend: 'positive', label: 'Mood positive', color: '#22c55e' }
+                if (avgScore < -0.5) return { trend: 'negative', label: 'Mood low', color: '#ef4444' }
+                return { trend: 'stable', label: 'Mood stable', color: '#6b7280' }
+            },
+
             // Phase 5: Update skill hours (for XP logging)
             updateSkillHours: (skillId, additionalHours) => set((state) => ({
                 realms: {
@@ -938,7 +989,7 @@ export const useStore = create(
         }),
         {
             name: 'afterlife-storage',
-            version: 4, // Bumped version for identity expansion migration
+            version: 5, // Bumped for Neural Pulse + Phase 2
             migrate: (persistedState, version) => {
                 console.log(`Zustand: Migrating storage from version ${version} to 4`)
 
@@ -977,6 +1028,17 @@ export const useStore = create(
                         quotientsHistory: persistedState.user.quotientsHistory ?? {
                             iq: [], eq: [], aq: [], tq: [], sq: [],
                         },
+                    }
+                }
+
+                // Migration for Neural Pulse (version 4 -> 5)
+                if (version < 5) {
+                    persistedState.neuralPulse = {
+                        message: null,
+                        priority: 'low',
+                        linkTo: null,
+                        linkLabel: null,
+                        lastShown: null,
                     }
                 }
 

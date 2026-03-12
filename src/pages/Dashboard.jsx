@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { personalityTypes } from '../data/mbtiData'
 import ReligionWidget from '../components/ReligionWidget'
+import NeuralPulse from '../components/NeuralPulse'
 
 // Compact Age display for HUD
 function AgeHudDisplay({ birthDate, birthTime }) {
@@ -89,9 +90,62 @@ function SkeletonFigure2D() {
 }
 
 export default function Dashboard() {
-  const { user, realms, getOverallBalance } = useStore()
+  const { user, realms, getOverallBalance, setNeuralPulse, getRealmInsights, getMoodTrend } = useStore()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+
+  // Generate proactive Neural Pulse on mount
+  useEffect(() => {
+    try {
+      const insights = getRealmInsights()
+      const moodTrend = getMoodTrend()
+
+      // Priority 1: negative/declining mood
+      if (moodTrend.trend === 'negative') {
+        setNeuralPulse({
+          message: 'Echo detects a low mood pattern in Empyra. Consider logging a reflection in Sanctum or talking to someone.',
+          priority: 'high',
+          linkTo: '/soul',
+          linkLabel: 'Open Sanctum',
+        })
+        return
+      }
+      if (moodTrend.trend === 'declining') {
+        setNeuralPulse({
+          message: 'Echo notices your mood has been declining. A short reflection or habit completion could shift the trajectory.',
+          priority: 'warning',
+          linkTo: '/soul',
+          linkLabel: 'Open Sanctum',
+        })
+        return
+      }
+
+      // Priority 2: critically low realm
+      const critical = insights.realmData?.find(r => r.balance < 15 && r.entries > 0)
+      if (critical) {
+        setNeuralPulse({
+          message: `${critical.name} is critically low at ${critical.balance}%. A single entry here would make a difference.`,
+          priority: 'high',
+          linkTo: null,
+          linkLabel: null,
+        })
+        return
+      }
+
+      // Priority 3: dormant realm
+      const dormantInsight = insights.insights?.find(i => i.type === 'dormant')
+      if (dormantInsight) {
+        setNeuralPulse({
+          message: dormantInsight.message,
+          priority: 'low',
+          linkTo: null,
+          linkLabel: null,
+        })
+      }
+    } catch (e) {
+      // silently fail — pulse is non-critical
+    }
+  }, []) // only on mount
 
   // Safety check
   if (!user?.name || !realms) {
@@ -227,6 +281,9 @@ export default function Dashboard() {
         <ReligionWidget />
 
       </main>
+
+      {/* Neural Pulse — proactive Echo notification */}
+      <NeuralPulse />
 
       {/* Hex Menu Overlay */}
       <AnimatePresence>

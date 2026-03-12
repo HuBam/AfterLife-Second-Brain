@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Send, Cpu, ChevronDown, ChevronUp, BookOpen, Heart, Activity, Star, Brain, Award } from 'lucide-react'
+import { ArrowLeft, Send, Cpu, ChevronDown, ChevronUp, BookOpen, Heart, Activity, Star, Brain, Award, Zap } from 'lucide-react'
 import { useStore } from '../store/useStore'
+import { callEcho } from '../services/openaiService'
 
 // ─── Language Detection ───────────────────────────────────────────────────────
 function detectLanguage(text) {
@@ -203,12 +204,13 @@ const breakdownMeta = {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function Echo() {
   const store = useStore()
-  const { echo, addEchoMessage, setEchoTyping, getEchoUnderstanding } = store
+  const { echo, addEchoMessage, setEchoTyping, getEchoUnderstanding, setNeuralPulse, getMoodTrend } = store
 
   const [input, setInput] = useState('')
   const [isHorizontal, setIsHorizontal] = useState(false)
   const [showBreakdown, setShowBreakdown] = useState(false)
   const [understanding, setUnderstanding] = useState({ score: 0, breakdown: {} })
+  const [aiMode, setAiMode] = useState(false) // true when OpenAI responded
   const messagesEndRef = useRef(null)
 
   // Update understanding score whenever store changes
@@ -227,11 +229,12 @@ export default function Echo() {
 
   const processMessage = async (msg) => {
     setEchoTyping(true)
-    await new Promise(r => setTimeout(r, 500 + Math.random() * 900))
+    await new Promise(r => setTimeout(r, 400 + Math.random() * 600))
 
     let response = ''
+    let usedAI = false
 
-    // Keep slash commands working
+    // Keep slash commands working (local only)
     if (msg.startsWith('/')) {
       const cmd = msg.toLowerCase().trim()
       if (cmd === '/help') {
@@ -252,14 +255,42 @@ export default function Echo() {
         response = `Unknown command: ${cmd}\nType /help for a list.`
       }
     } else {
-      // Natural language — detect language and generate smart response
-      const lang = detectLanguage(msg)
+      // Try OpenAI first — fall back to local rule-based
       const ctx = buildContext(store)
-      response = generateResponse(msg, lang, ctx)
+      const aiResponse = await callEcho(msg, ctx)
+
+      if (aiResponse) {
+        response = aiResponse
+        usedAI = true
+      } else {
+        const lang = detectLanguage(msg)
+        response = generateResponse(msg, lang, ctx)
+      }
     }
 
+    setAiMode(usedAI)
     setEchoTyping(false)
     addEchoMessage({ role: 'assistant', content: response })
+
+    // After each response, passively check mood trend and set Neural Pulse if needed
+    try {
+      const moodTrend = getMoodTrend()
+      if (moodTrend.trend === 'negative') {
+        setNeuralPulse({
+          message: 'Echo detects a low mood pattern. Consider a reflection in Sanctum.',
+          priority: 'high',
+          linkTo: '/soul',
+          linkLabel: 'Open Sanctum',
+        })
+      } else if (moodTrend.trend === 'declining') {
+        setNeuralPulse({
+          message: 'Mood trend is declining. A habit streak or gratitude log can help.',
+          priority: 'warning',
+          linkTo: '/soul',
+          linkLabel: 'Open Sanctum',
+        })
+      }
+    } catch { /* silent */ }
   }
 
   const handleSubmit = (e) => {
@@ -272,6 +303,8 @@ export default function Echo() {
 
   const totalSegments = 8
   const filledSegments = Math.round((understanding.score / 100) * totalSegments)
+
+  const hasApiKey = !!import.meta.env.VITE_OPENAI_API_KEY
 
   return (
     <div className="echo-page">
@@ -294,7 +327,14 @@ export default function Echo() {
           </motion.div>
           <span className="ai-label">ECHO</span>
           <span className="ai-status">{echo.isTyping ? 'Processing...' : 'Online'}</span>
-          <span className="ai-lang">EN · ES · AR</span>
+          <div className="ai-badges">
+            <span className="ai-lang">EN · ES · AR</span>
+            {(hasApiKey || aiMode) && (
+              <span className="ai-badge-gpt">
+                <Zap size={9} /> GPT-4o
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Understanding Bar */}
