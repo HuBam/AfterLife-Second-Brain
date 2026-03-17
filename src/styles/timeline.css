@@ -1,0 +1,132 @@
+/* =========================================
+   Phase 3: Chronos Timeline & Life Path
+   ========================================= */
+
+.chronos-hero {
+    text-align: center;
+}
+
+/* ── Age Unit Pills ── */
+.age-unit-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.age-unit-pill {
+    font-size: 0.6rem;
+    font-family: var(--font-display);
+    letter-spacing: 1px;
+    padding: 0.2rem 0.5rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.age-unit-pill:hover {
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+}
+
+.age-unit-pill.active {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 12px rgba(124, 58, 237, 0.5);
+}
+
+/* ── Chronos Number Display ── */
+.chronos-number {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    font-weight: 700;
+    color: var(--accent-primary);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.chronos-unit-label {
+    font-size: 0.6rem;
+    letter-spacing: 3px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+}
+
+/* ── Dual Life Path Panel ── */
+.life-path-dual {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.life-path-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    gap: 0.2rem;
+}
+
+.life-path-side.lived {
+    background: rgba(74, 158, 255, 0.05);
+}
+
+.life-path-side.remaining {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.life-path-label {
+    font-size: 0.55rem;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.life-path-main {
+    font-family: var(--font-display);
+    font-size: clamp(0.8rem, 3vw, 1.1rem);
+    font-weight: 700;
+    color: var(--accent-primary);
+}
+
+.life-path-sub {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+}
+
+.life-path-divider {
+    width: 1px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.life-progress-wrap {
+    text-align: left;
+}
+
+/* ── Advanced Mode: Habit XP Event Badge ── */
+.timeline-xp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 20px;
+    font-family: var(--font-display);
+    letter-spacing: 1px;
+}

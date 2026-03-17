@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Send, Cpu, ChevronDown, ChevronUp, BookOpen, Heart, Activity, Star, Brain, Award, Zap } from 'lucide-react'
 import { useStore } from '../store/useStore'
-import { callEcho } from '../services/openaiService'
+import { callEcho } from '../services/geminiService'
 
 // ─── Language Detection ───────────────────────────────────────────────────────
 function detectLanguage(text) {
@@ -304,7 +304,7 @@ export default function Echo() {
   const totalSegments = 8
   const filledSegments = Math.round((understanding.score / 100) * totalSegments)
 
-  const hasApiKey = !!import.meta.env.VITE_OPENAI_API_KEY
+  const hasApiKey = !!import.meta.env.VITE_GEMINI_API_KEY
 
   return (
     <div className="echo-page">
@@ -331,7 +331,7 @@ export default function Echo() {
             <span className="ai-lang">EN · ES · AR</span>
             {(hasApiKey || aiMode) && (
               <span className="ai-badge-gpt">
-                <Zap size={9} /> GPT-4o
+                <Zap size={9} /> Gemini
               </span>
             )}
           </div>
