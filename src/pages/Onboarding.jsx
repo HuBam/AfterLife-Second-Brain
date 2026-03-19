@@ -181,7 +181,7 @@ export default function Onboarding() {
             <div className="flex gap-md justify-center">
                 <button className="btn btn-ghost" onClick={() => setStep(0)}>Back</button>
                 <button className="btn btn-primary" onClick={() => setStep(2)}>
-                    Continue <ArrowRight size={18} />
+                    {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
                 </button>
             </div>
         </div>
@@ -208,7 +208,7 @@ export default function Onboarding() {
                     onClick={() => setStep(3)}
                     disabled={!formData.name.trim()}
                 >
-                    Continue <ArrowRight size={18} />
+                    {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
                 </button>
             </div>
         </div>
@@ -284,6 +284,8 @@ export default function Onboarding() {
                         </span>
                         <input
                             type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             value={birthYearInput}
                             onChange={(e) => handleYearChange(e.target.value)}
                             placeholder="YY"
@@ -400,7 +402,7 @@ export default function Onboarding() {
                     onClick={() => setStep(5)}
                     disabled={!formData.gender}
                 >
-                    Continue <ArrowRight size={18} />
+                    {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
                 </button>
             </div>
         </div>
@@ -495,7 +497,7 @@ export default function Onboarding() {
                     onClick={() => setStep(7)}
                     disabled={!formData.mbti}
                 >
-                    Continue <ArrowRight size={18} />
+                    {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
                 </button>
             </div>
         </div>
@@ -553,7 +555,7 @@ export default function Onboarding() {
                         className="btn btn-primary"
                         onClick={() => handleManualPercentages(scores)}
                     >
-                        Continue <ArrowRight size={18} />
+                        {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
                     </button>
                 </div>
             </div>
@@ -634,7 +636,7 @@ export default function Onboarding() {
                         onClick={() => setStep(8)}
                         disabled={formData.religion === 'other' && !formData.customReligion}
                     >
-                        Continue <ArrowRight size={18} />
+                        {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
                     </button>
                 </div>
             </div>
@@ -713,7 +715,7 @@ export default function Onboarding() {
                 <div className="flex gap-md justify-center mt-xl">
                     <button className="btn btn-ghost" onClick={() => setStep(8)}>Back</button>
                     <button className="btn btn-primary" onClick={() => setStep(10)} disabled={!formData.enneagram}>
-                        Continue <ArrowRight size={18} />
+                        {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
                     </button>
                 </div>
             </div>
@@ -939,7 +941,7 @@ export default function Onboarding() {
                 <div className="flex gap-md justify-center mt-xl">
                     <button className="btn btn-ghost" onClick={() => setStep(formData.enneagramPath === 'skip' ? 8 : 9)}>Back</button>
                     <button className="btn btn-primary" onClick={() => setStep(11)}>
-                        Continue <ArrowRight size={18} />
+                        {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
                     </button>
                 </div>
             </div>
