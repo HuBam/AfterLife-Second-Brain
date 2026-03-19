@@ -1,0 +1,6 @@
+{
+    "name": "afterlife-second-brain",
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "framework": "vite"
+}

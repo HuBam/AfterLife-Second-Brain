@@ -27,3 +27,5 @@ dist-ssr
 AfterLife_Second_Brain_Project_Document.pdf
 IMPLEMENTATION_PLAN.md
 IDEAS.md
+.vercel
+.env*.local

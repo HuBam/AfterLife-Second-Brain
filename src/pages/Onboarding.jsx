@@ -21,19 +21,23 @@ export default function Onboarding() {
     const [formData, setFormData] = useState({
         name: '',
         birthDate: '',
-        birthTime: '', // Optional: HH:MM format
+        birthYear: '',
+        birthYearInput: '', // 2-digit display string – stored in formData so it survives remounts
+        birthMonth: '',
+        birthDay: '',
+        birthTime: '',
         mbti: '',
         mbtiScores: null,
-        mbtiPath: null, // 'know', 'test', 'manual', 'skip'
-        gender: null, // 'male', 'female', 'non-binary', 'skip'
+        mbtiPath: null,
+        gender: null,
         religion: null,
         customReligion: '',
-        mbtiVariant: 'A', // Default to Assertive
+        mbtiVariant: 'A',
         enneagram: null,
         enneagramAnswers: {},
-        enneagramPath: 'know', // 'know', 'test', 'skip'
+        enneagramPath: 'know',
         spiritAnimal: null,
-        mode: 'basic', // 'basic' or 'advanced'
+        mode: 'basic',
     })
 
     const calculateAge = (birthDate) => {
@@ -91,7 +95,7 @@ export default function Onboarding() {
             mbti: result.type,
             mbtiScores: result.percentages,
         }))
-        setStep(6) // Go to results (shifted from 5)
+        setStep(7) // Go to Religion
     }
 
     const handleManualPercentages = (scores) => {
@@ -107,7 +111,7 @@ export default function Onboarding() {
             mbti: type,
             mbtiScores: scores,
         }))
-        setStep(6)
+        setStep(7) // Go to Religion
     }
 
     // Step Components
@@ -212,7 +216,7 @@ export default function Onboarding() {
 
     const BirthDateStep = () => {
         const currentYear = new Date().getFullYear()
-        const currentYearShort = currentYear % 100 // e.g., 26 for 2026
+        const currentYearShort = currentYear % 100
         const months = [
             { value: '01', label: 'January' },
             { value: '02', label: 'February' },
@@ -228,58 +232,41 @@ export default function Onboarding() {
             { value: '12', label: 'December' },
         ]
 
-        // Local state for the 2-digit year input
-        const [yearInput, setYearInput] = useState('')
-        const [fullYear, setFullYear] = useState('')
+        // All state lives in formData — zero local state so remounts don't wipe anything
+        const { birthYearInput, birthYear, birthMonth, birthDay } = formData
 
-        // Parse existing date or use defaults
-        const [storedYear, month, day] = formData.birthDate
-            ? formData.birthDate.split('-')
-            : ['', '', '']
-
-        // Initialize yearInput from stored data
-        useState(() => {
-            if (storedYear) {
-                setYearInput(storedYear.slice(-2))
-                setFullYear(storedYear)
-            }
-        })
-
-        // Auto-complete 2-digit year to 4-digit
         const handleYearChange = (value) => {
-            // Only allow digits, max 2 characters
             const cleaned = value.replace(/\D/g, '').slice(0, 2)
-            setYearInput(cleaned)
 
             if (cleaned.length === 2) {
                 const num = parseInt(cleaned, 10)
-                // If <= current year's last 2 digits, assume 2000s; otherwise 1900s
                 const full = num <= currentYearShort ? 2000 + num : 1900 + num
-                setFullYear(full.toString())
-
-                // Auto-update the date if we have month and day
-                if (month && day) {
-                    setFormData({ ...formData, birthDate: `${full}-${month}-${day.padStart(2, '0')}` })
-                }
+                const fullStr = full.toString()
+                const newDate = birthMonth && birthDay ? `${fullStr}-${birthMonth}-${birthDay}` : ''
+                setFormData(prev => ({ ...prev, birthYearInput: cleaned, birthYear: fullStr, birthDate: newDate }))
             } else {
-                setFullYear('')
+                // Store the partial input too — no local state, so this must live in formData
+                setFormData(prev => ({ ...prev, birthYearInput: cleaned, birthYear: '', birthDate: '' }))
             }
         }
 
-        const updateDate = (newYear, newMonth, newDay) => {
-            if (newYear && newMonth && newDay) {
-                setFormData({ ...formData, birthDate: `${newYear}-${newMonth}-${newDay.padStart(2, '0')}` })
-            }
+        const handleMonthChange = (newMonth) => {
+            const newDate = birthYear && birthDay ? `${birthYear}-${newMonth}-${birthDay}` : ''
+            setFormData(prev => ({ ...prev, birthMonth: newMonth, birthDate: newDate }))
         }
 
-        // Get days in selected month
-        const yearForCalc = fullYear || storedYear || currentYear.toString()
-        const daysInMonth = month
-            ? new Date(parseInt(yearForCalc), parseInt(month), 0).getDate()
+        const handleDayChange = (newDay) => {
+            const padded = String(newDay).padStart(2, '0')
+            const newDate = birthYear && birthMonth ? `${birthYear}-${birthMonth}-${padded}` : ''
+            setFormData(prev => ({ ...prev, birthDay: padded, birthDate: newDate }))
+        }
+
+        const daysInMonth = birthMonth
+            ? new Date(parseInt(birthYear || currentYear), parseInt(birthMonth), 0).getDate()
             : 31
         const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
 
-        const displayYear = fullYear || storedYear
+        const canContinue = !!(birthYear && birthMonth && birthDay)
 
         return (
             <div className="text-center">
@@ -289,29 +276,32 @@ export default function Onboarding() {
                 <h2 className="mb-md">When were you born?</h2>
                 <p className="text-secondary text-sm mb-lg">This helps track your life timeline</p>
 
-                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
-                    {/* Year Input - 2 digits with auto-complete */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {/* Year Input */}
+                    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem' }}>
+                        <span style={{ position: 'absolute', top: '-1.4rem', left: '2px', fontSize: '0.65rem', color: 'var(--text-secondary)', opacity: 0.6, whiteSpace: 'nowrap' }}>
+                            last 2 digits of year
+                        </span>
                         <input
                             type="text"
-                            value={yearInput || (storedYear ? storedYear.slice(-2) : '')}
+                            value={birthYearInput}
                             onChange={(e) => handleYearChange(e.target.value)}
                             placeholder="YY"
                             className="onboarding-input"
-                            style={{ width: '60px', textAlign: 'center' }}
+                            style={{ width: '72px', textAlign: 'center', padding: '0.625rem 0.5rem', letterSpacing: '0.1em' }}
                             maxLength={2}
                         />
-                        {displayYear && (
-                            <span style={{ color: 'var(--accent-primary)', fontSize: '0.875rem', minWidth: '45px' }}>
-                                → {displayYear}
+                        {birthYear && (
+                            <span style={{ position: 'absolute', bottom: '-1.3rem', color: 'var(--accent-primary)', fontSize: '0.75rem' }}>
+                                {birthYear}
                             </span>
                         )}
                     </div>
 
                     {/* Month Dropdown */}
                     <select
-                        value={month}
-                        onChange={(e) => updateDate(displayYear || currentYear.toString(), e.target.value, day || '01')}
+                        value={birthMonth}
+                        onChange={(e) => handleMonthChange(e.target.value)}
                         className="onboarding-input"
                         style={{ width: 'auto', minWidth: '120px' }}
                     >
@@ -323,8 +313,8 @@ export default function Onboarding() {
 
                     {/* Day Dropdown */}
                     <select
-                        value={day ? parseInt(day).toString() : ''}
-                        onChange={(e) => updateDate(displayYear || currentYear.toString(), month || '01', e.target.value)}
+                        value={birthDay ? parseInt(birthDay).toString() : ''}
+                        onChange={(e) => handleDayChange(e.target.value)}
                         className="onboarding-input"
                         style={{ width: 'auto', minWidth: '80px' }}
                     >
@@ -343,18 +333,18 @@ export default function Onboarding() {
                     <input
                         type="time"
                         value={formData.birthTime}
-                        onChange={(e) => setFormData({ ...formData, birthTime: e.target.value })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, birthTime: e.target.value }))}
                         className="onboarding-input"
                         style={{ width: 'auto' }}
                     />
                 </div>
 
                 <div className="flex gap-md justify-center mt-xl">
-                    <button className="btn btn-ghost" onClick={() => setStep(1)}>Back</button>
+                    <button className="btn btn-ghost" onClick={() => setStep(2)}>Back</button>
                     <button
                         className="btn btn-primary"
-                        onClick={() => setStep(3)} // Go to Gender
-                        disabled={!displayYear || !month || !day}
+                        onClick={() => setStep(4)}
+                        disabled={!canContinue}
                     >
                         Continue <ArrowRight size={18} />
                     </button>
@@ -362,6 +352,7 @@ export default function Onboarding() {
             </div>
         )
     }
+
 
     const GenderStep = () => (
         <div className="text-center">
@@ -403,10 +394,10 @@ export default function Onboarding() {
             </div>
 
             <div className="flex gap-md justify-center mt-xl">
-                <button className="btn btn-ghost" onClick={() => setStep(2)}>Back</button>
+                <button className="btn btn-ghost" onClick={() => setStep(3)}>Back</button>
                 <button
                     className="btn btn-primary"
-                    onClick={() => setStep(4)}
+                    onClick={() => setStep(5)}
                     disabled={!formData.gender}
                 >
                     Continue <ArrowRight size={18} />
@@ -426,7 +417,7 @@ export default function Onboarding() {
             <div className="mbti-choice-grid">
                 <button
                     className="choice-card glass-card"
-                    onClick={() => { setFormData({ ...formData, mbtiPath: 'know' }); setStep(5) }}
+                    onClick={() => { setFormData({ ...formData, mbtiPath: 'know' }); setStep(6) }}
                 >
                     <Check size={32} className="mb-sm" style={{ color: 'var(--accent-primary)' }} />
                     <h3>I Know My Type</h3>
@@ -435,7 +426,7 @@ export default function Onboarding() {
 
                 <button
                     className="choice-card glass-card"
-                    onClick={() => { setFormData({ ...formData, mbtiPath: 'test' }); setStep(5) }}
+                    onClick={() => { setFormData({ ...formData, mbtiPath: 'test' }); setStep(6) }}
                 >
                     <HelpCircle size={32} className="mb-sm" style={{ color: '#f59e0b' }} />
                     <h3>Take The Test</h3>
@@ -444,7 +435,7 @@ export default function Onboarding() {
 
                 <button
                     className="choice-card glass-card"
-                    onClick={() => { setFormData({ ...formData, mbtiPath: 'manual' }); setStep(5) }}
+                    onClick={() => { setFormData({ ...formData, mbtiPath: 'manual' }); setStep(6) }}
                 >
                     <Edit3 size={32} className="mb-sm" style={{ color: '#8b5cf6' }} />
                     <h3>Enter My Percentages</h3>
@@ -453,10 +444,10 @@ export default function Onboarding() {
             </div>
 
             <div className="flex gap-md justify-center mt-xl">
-                <button className="btn btn-ghost" onClick={() => setStep(3)}>Back</button>
+                <button className="btn btn-ghost" onClick={() => setStep(4)}>Back</button>
                 <button
                     className="btn btn-ghost text-secondary"
-                    onClick={() => { setFormData({ ...formData, mbtiPath: 'skip' }); setStep(6) }}
+                    onClick={() => { setFormData({ ...formData, mbtiPath: 'skip' }); setStep(7) }}
                 >
                     Skip for now
                 </button>
@@ -472,7 +463,7 @@ export default function Onboarding() {
                 <MBTIAssessment
                     mode="basic"
                     onComplete={handleAssessmentComplete}
-                    onBack={() => setStep(4)}
+                    onBack={() => setStep(5)}
                 />
             )
         } else if (formData.mbtiPath === 'manual') {
@@ -498,10 +489,10 @@ export default function Onboarding() {
                 ))}
             </div>
             <div className="flex gap-md justify-center mt-xl">
-                <button className="btn btn-ghost" onClick={() => setStep(4)}>Back</button>
+                <button className="btn btn-ghost" onClick={() => setStep(5)}>Back</button>
                 <button
                     className="btn btn-primary"
-                    onClick={() => setStep(6)}
+                    onClick={() => setStep(7)}
                     disabled={!formData.mbti}
                 >
                     Continue <ArrowRight size={18} />
@@ -557,7 +548,7 @@ export default function Onboarding() {
                 </div>
 
                 <div className="flex gap-md justify-center mt-xl">
-                    <button className="btn btn-ghost" onClick={() => setStep(4)}>Back</button>
+                    <button className="btn btn-ghost" onClick={() => setStep(5)}>Back</button>
                     <button
                         className="btn btn-primary"
                         onClick={() => handleManualPercentages(scores)}
@@ -628,19 +619,19 @@ export default function Onboarding() {
                 )}
 
                 <div className="flex gap-md justify-center mt-xl">
-                    <button className="btn btn-ghost" onClick={() => setStep(5)}>Back</button>
+                    <button className="btn btn-ghost" onClick={() => setStep(formData.mbtiPath === 'skip' ? 5 : 6)}>Back</button>
                     <button
                         className="btn btn-ghost"
                         onClick={() => {
                             setFormData(prev => ({ ...prev, religion: null, customReligion: '' }))
-                            setStep(7)
+                            setStep(8)
                         }}
                     >
                         Skip for now
                     </button>
                     <button
                         className="btn btn-primary"
-                        onClick={() => setStep(7)}
+                        onClick={() => setStep(8)}
                         disabled={formData.religion === 'other' && !formData.customReligion}
                     >
                         Continue <ArrowRight size={18} />
@@ -663,7 +654,7 @@ export default function Onboarding() {
                 <div className="mbti-choice-grid">
                     <button
                         className="choice-card glass-card"
-                        onClick={() => { setFormData({ ...formData, enneagramPath: 'know' }); setStep(8) }}
+                        onClick={() => { setFormData({ ...formData, enneagramPath: 'know' }); setStep(9) }}
                     >
                         <Check size={32} className="mb-sm" style={{ color: '#10b981' }} />
                         <h3>I Know My Type</h3>
@@ -672,7 +663,7 @@ export default function Onboarding() {
 
                     <button
                         className="choice-card glass-card"
-                        onClick={() => { setFormData({ ...formData, enneagramPath: 'test' }); setStep(8) }}
+                        onClick={() => { setFormData({ ...formData, enneagramPath: 'test' }); setStep(9) }}
                     >
                         <HelpCircle size={32} className="mb-sm" style={{ color: '#f59e0b' }} />
                         <h3>Take Mini-Test</h3>
@@ -681,10 +672,10 @@ export default function Onboarding() {
                 </div>
 
                 <div className="flex gap-md justify-center mt-xl">
-                    <button className="btn btn-ghost" onClick={() => setStep(6)}>Back</button>
+                    <button className="btn btn-ghost" onClick={() => setStep(7)}>Back</button>
                     <button
                         className="btn btn-ghost text-secondary"
-                        onClick={() => { setFormData({ ...formData, enneagramPath: 'skip', enneagram: null }); setStep(9) }}
+                        onClick={() => { setFormData({ ...formData, enneagramPath: 'skip', enneagram: null }); setStep(10) }}
                     >
                         Skip for now
                     </button>
@@ -697,7 +688,7 @@ export default function Onboarding() {
         if (formData.enneagramPath === 'know') {
             return <EnneagramSelectionGrid />
         } else if (formData.enneagramPath === 'test') {
-            return <EnneagramTest onComplete={(type) => { setFormData({ ...prev => ({ ...prev, enneagram: type }) }); setStep(9) }} />
+            return <EnneagramTest onComplete={(type) => { setFormData({ ...prev => ({ ...prev, enneagram: type }) }); setStep(10) }} />
         }
         return null
     }
@@ -720,8 +711,8 @@ export default function Onboarding() {
                     ))}
                 </div>
                 <div className="flex gap-md justify-center mt-xl">
-                    <button className="btn btn-ghost" onClick={() => setStep(7)}>Back</button>
-                    <button className="btn btn-primary" onClick={() => setStep(9)} disabled={!formData.enneagram}>
+                    <button className="btn btn-ghost" onClick={() => setStep(8)}>Back</button>
+                    <button className="btn btn-primary" onClick={() => setStep(10)} disabled={!formData.enneagram}>
                         Continue <ArrowRight size={18} />
                     </button>
                 </div>
@@ -742,7 +733,7 @@ export default function Onboarding() {
             } else {
                 const result = calculateEnneagram(newAnswers)
                 setFormData(prev => ({ ...prev, enneagram: result, enneagramAnswers: newAnswers }))
-                setStep(9)
+                setStep(10)
             }
         }
 
@@ -785,8 +776,8 @@ export default function Onboarding() {
                 </div>
 
                 <div className="flex gap-md justify-center">
-                    <button className="btn btn-ghost" onClick={() => currentQ > 0 ? setCurrentQ(currentQ - 1) : setStep(7)}>Back</button>
-                    <button className="btn btn-ghost" onClick={() => setStep(7)}>Exit Test</button>
+                    <button className="btn btn-ghost" onClick={() => currentQ > 0 ? setCurrentQ(currentQ - 1) : setStep(8)}>Back</button>
+                    <button className="btn btn-ghost" onClick={() => setStep(8)}>Exit Test</button>
                 </div>
             </div>
         )
@@ -946,8 +937,8 @@ export default function Onboarding() {
                 </motion.div>
 
                 <div className="flex gap-md justify-center mt-xl">
-                    <button className="btn btn-ghost" onClick={() => setStep(formData.enneagramPath === 'skip' ? 7 : 8)}>Back</button>
-                    <button className="btn btn-primary" onClick={() => setStep(10)}>
+                    <button className="btn btn-ghost" onClick={() => setStep(formData.enneagramPath === 'skip' ? 8 : 9)}>Back</button>
+                    <button className="btn btn-primary" onClick={() => setStep(11)}>
                         Continue <ArrowRight size={18} />
                     </button>
                 </div>
