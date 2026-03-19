@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../store/useStore'
-import { Sparkles, ArrowRight, ArrowLeft, User, Calendar, Brain, HelpCircle, Check, Edit3, Heart } from 'lucide-react'
+import { Sparkles, ArrowRight, ArrowLeft, User, Calendar, Brain, HelpCircle, Check, Edit3, Heart, Globe, Gamepad2, Radio } from 'lucide-react'
 import MBTIAssessment from '../components/MBTIAssessment'
 import { personalityTypes, generateStarterSkills, lifeCategories, enneagramQuestions, calculateEnneagram } from '../data/mbtiData'
 import { religions } from '../data/religionData'
@@ -139,50 +139,123 @@ export default function Onboarding() {
 
     // Step 1 — Mode Selection
     const ModeStep = () => (
-        <div className="text-center">
+        <div className="protocol-container">
             <motion.div
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-lg"
+                className="protocol-header"
             >
-                <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>⚙️</div>
-                <h2 className="font-display" style={{ fontSize: '1.5rem' }}>Choose Your Experience</h2>
-                <p className="text-secondary text-sm mt-sm" style={{ maxWidth: '360px', margin: '0.5rem auto 0' }}>
-                    You can change this anytime in Settings.
+                <div className="os-version">
+                    <div className="os-icon"></div>
+                    <span>NEURAL OS V2.0.4</span>
+                    <Radio size={14} className="os-signal" />
+                </div>
+                
+                <h2 className="protocol-title">SELECT INTERFACE PROTOCOL</h2>
+                <p className="protocol-subtitle">
+                    AWAITING USER SYNCHRONIZATION AND DEPLOYMENT ARCHITECTURE
                 </p>
             </motion.div>
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '2rem' }}>
-                <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className={`choice-card glass-card ${formData.mode === 'basic' ? 'active' : ''}`}
+            <div className="protocol-slider">
+                {/* Basic Card */}
+                <motion.div 
+                    className={`protocol-card basic ${formData.mode === 'basic' ? 'selected' : ''}`}
                     onClick={() => setFormData({ ...formData, mode: 'basic' })}
-                    style={{ border: formData.mode === 'basic' ? '2px solid var(--accent-primary)' : '2px solid rgba(255,255,255,0.1)', maxWidth: '160px' }}
+                    whileTap={{ scale: 0.98 }}
                 >
-                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🪐</div>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '0.25rem' }}>Basic</h3>
-                    <p className="text-secondary" style={{ fontSize: '0.75rem' }}>Clean & minimal. Track your life without the game layer.</p>
-                </motion.button>
+                    <div className="protocol-bg-icon">
+                        <Globe size={120} strokeWidth={1} />
+                    </div>
+                    <div className="protocol-icon-wrapper">
+                        <Globe size={24} />
+                    </div>
+                    
+                    <h3 className="protocol-card-title">BASIC</h3>
+                    
+                    <p className="protocol-card-desc">
+                        Streamlined experience. Essential thought capture and organization. Designed for clarity and rapid conceptual processing.
+                    </p>
+                    
+                    <div className="protocol-badges">
+                        <span>MINIMALIST UI</span>
+                        <span>CORE NODES</span>
+                        <span>ZEN MODE</span>
+                    </div>
 
-                <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className={`choice-card glass-card ${formData.mode === 'advanced' ? 'active' : ''}`}
+                    <div className="protocol-visual basic-visual">
+                        <div className="visual-cube"></div>
+                    </div>
+
+                    <button 
+                        className="protocol-btn basic-btn"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setFormData({ ...formData, mode: 'basic' });
+                            setStep(2);
+                        }}
+                    >
+                        INITIALIZE BASIC LINK
+                    </button>
+                </motion.div>
+
+                {/* Advanced Card */}
+                <motion.div 
+                    className={`protocol-card advanced ${formData.mode === 'advanced' ? 'selected' : ''}`}
                     onClick={() => setFormData({ ...formData, mode: 'advanced' })}
-                    style={{ border: formData.mode === 'advanced' ? '2px solid var(--accent-primary)' : '2px solid rgba(255,255,255,0.1)', maxWidth: '160px' }}
+                    whileTap={{ scale: 0.98 }}
                 >
-                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎮</div>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '0.25rem' }}>Advanced</h3>
-                    <p className="text-secondary" style={{ fontSize: '0.75rem' }}>Full game-style UI. XP, levels, animated events & more.</p>
-                </motion.button>
-            </div>
+                    <div className="protocol-bg-icon">
+                        <Gamepad2 size={120} strokeWidth={1} />
+                    </div>
+                    
+                    <div className="protocol-header-row">
+                        <div className="protocol-icon-wrapper advanced-icon">
+                            <Gamepad2 size={24} />
+                        </div>
+                        <div className="protocol-status-bars">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                    
+                    <div className="protocol-title-row">
+                        <h3 className="protocol-card-title">ADVANCED</h3>
+                        <span className="combat-ready-badge">COMBAT READY</span>
+                    </div>
+                    
+                    <p className="protocol-card-desc">
+                        Full tactical HUD. Real-time cognitive tracking & node visualization. High-density data stream for professional neural architects.
+                    </p>
+                    
+                    <div className="protocol-badges advanced-badges">
+                        <span>NEURAL MAPPING</span>
+                        <span>COGNITIVE TELEMETRY</span>
+                        <span>SUB-ROUTINE ACCESS</span>
+                    </div>
 
-            <div className="flex gap-md justify-center">
-                <button className="btn btn-ghost" onClick={() => setStep(0)}>Back</button>
-                <button className="btn btn-primary" onClick={() => setStep(2)}>
-                    {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
-                </button>
+                    <div className="protocol-visual advanced-visual">
+                        <div className="visual-grid"></div>
+                        <span className="visual-text top-left">NODE_SCAN: ACTIVE</span>
+                        <span className="visual-text bottom-right">LATENCY: 0.002ms</span>
+                        <div className="visual-diamond"></div>
+                    </div>
+
+                    <button 
+                        className="protocol-btn advanced-btn"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setFormData({ ...formData, mode: 'advanced' });
+                            setStep(2);
+                        }}
+                    >
+                        ENGAGE TACTICAL SYNC
+                    </button>
+                </motion.div>
+            </div>
+            
+            <div className="protocol-footer">
+                <div className="protocol-divider"><span></span></div>
+                <p>WARNING: PROTOCOL SELECTION IS PERMANENT FOR CURRENT SESSION. ENSURE NEURAL SHIELDING IS ACTIVE BEFORE INITIALIZATION.</p>
             </div>
         </div>
     )
@@ -208,7 +281,7 @@ export default function Onboarding() {
                     onClick={() => setStep(3)}
                     disabled={!formData.name.trim()}
                 >
-                    {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
+                    "Continue" <ArrowRight size={18} />
                 </button>
             </div>
         </div>
@@ -402,7 +475,7 @@ export default function Onboarding() {
                     onClick={() => setStep(5)}
                     disabled={!formData.gender}
                 >
-                    {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
+                    "Continue" <ArrowRight size={18} />
                 </button>
             </div>
         </div>
@@ -497,7 +570,7 @@ export default function Onboarding() {
                     onClick={() => setStep(7)}
                     disabled={!formData.mbti}
                 >
-                    {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
+                    "Continue" <ArrowRight size={18} />
                 </button>
             </div>
         </div>
@@ -555,7 +628,7 @@ export default function Onboarding() {
                         className="btn btn-primary"
                         onClick={() => handleManualPercentages(scores)}
                     >
-                        {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
+                        "Continue" <ArrowRight size={18} />
                     </button>
                 </div>
             </div>
@@ -636,7 +709,7 @@ export default function Onboarding() {
                         onClick={() => setStep(8)}
                         disabled={formData.religion === 'other' && !formData.customReligion}
                     >
-                        {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
+                        "Continue" <ArrowRight size={18} />
                     </button>
                 </div>
             </div>
@@ -715,7 +788,7 @@ export default function Onboarding() {
                 <div className="flex gap-md justify-center mt-xl">
                     <button className="btn btn-ghost" onClick={() => setStep(8)}>Back</button>
                     <button className="btn btn-primary" onClick={() => setStep(10)} disabled={!formData.enneagram}>
-                        {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
+                        "Continue" <ArrowRight size={18} />
                     </button>
                 </div>
             </div>
@@ -941,7 +1014,7 @@ export default function Onboarding() {
                 <div className="flex gap-md justify-center mt-xl">
                     <button className="btn btn-ghost" onClick={() => setStep(formData.enneagramPath === 'skip' ? 8 : 9)}>Back</button>
                     <button className="btn btn-primary" onClick={() => setStep(11)}>
-                        {!canContinue ? `Missing ${!birthYear ? "YY " : ""}${!birthMonth ? "Month " : ""}${!birthDay ? "Day" : ""}` : "Continue"} <ArrowRight size={18} />
+                        "Continue" <ArrowRight size={18} />
                     </button>
                 </div>
             </div>
@@ -989,6 +1062,311 @@ export default function Onboarding() {
             </div>
 
             <style>{`
+        .protocol-container {
+          width: 100vw;
+          margin-left: calc(-50vw + 50%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 2rem 1rem;
+          color: #fff;
+          font-family: monospace;
+          background: #0f1115;
+          margin-top: -2rem;
+          border-radius: 8px;
+        }
+
+        .protocol-header {
+          text-align: center;
+          margin-bottom: 2rem;
+          width: 100%;
+        }
+
+        .os-version {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          justify-content: center;
+          color: #00f0ff;
+          font-size: 0.7rem;
+          letter-spacing: 0.1em;
+          margin-bottom: 1.5rem;
+        }
+
+        .os-icon {
+          width: 16px;
+          height: 16px;
+          background: #ffccbc;
+          border-radius: 4px 0 4px 4px;
+        }
+
+        .protocol-title {
+          font-family: var(--font-display, sans-serif);
+          font-size: 1.4rem;
+          color: #00f0ff;
+          text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+          letter-spacing: 0.15em;
+          margin-bottom: 0.5rem;
+        }
+
+        .protocol-subtitle {
+          font-size: 0.55rem;
+          color: #64748b;
+          letter-spacing: 0.1em;
+          max-width: 300px;
+          margin: 0 auto;
+          line-height: 1.5;
+        }
+
+        .protocol-slider {
+          display: flex;
+          gap: 1rem;
+          width: 100vw;
+          margin-left: calc(-50vw + 50%);
+          padding: 1rem 5vw 2rem 5vw;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          scrollbar-width: none;
+        }
+        
+        .protocol-slider::-webkit-scrollbar {
+          display: none;
+        }
+
+        .protocol-card {
+          flex: 0 0 85vw;
+          max-width: 340px;
+          scroll-snap-align: center;
+          border-radius: 4px;
+          padding: 1.5rem;
+          position: relative;
+          overflow: hidden;
+          background: #15181d;
+          border: 1px solid rgba(255,255,255,0.05);
+          display: flex;
+          flex-direction: column;
+          cursor: pointer;
+        }
+
+        .protocol-card.basic.selected { border: 1px solid #00f0ff; }
+        .protocol-card.advanced.selected { border: 1px solid #a855f7; }
+
+        .protocol-card.advanced {
+          background: linear-gradient(180deg, #1b1325 0%, #15101c 100%);
+          border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        .protocol-bg-icon {
+          position: absolute;
+          top: 2rem;
+          right: 1rem;
+          opacity: 0.05;
+          pointer-events: none;
+        }
+
+        .protocol-icon-wrapper {
+          width: 44px;
+          height: 44px;
+          background: rgba(255,255,255,0.05);
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 1.25rem;
+          color: #00f0ff;
+        }
+
+        .advanced-icon {
+          color: #a855f7;
+          background: rgba(168, 85, 247, 0.1);
+        }
+
+        .protocol-header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+        }
+
+        .protocol-status-bars {
+          display: flex;
+          gap: 3px;
+        }
+        .protocol-status-bars span {
+          width: 4px;
+          height: 10px;
+          background: #a855f7;
+          opacity: 0.5;
+        }
+
+        .protocol-title-row {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .protocol-card-title {
+          font-size: 1.5rem;
+          font-family: var(--font-display, sans-serif);
+          font-weight: bold;
+          letter-spacing: 0.05em;
+          margin: 0;
+          color: white;
+          text-align: left;
+        }
+
+        .combat-ready-badge {
+          font-size: 0.5rem;
+          color: #f59e0b;
+          border: 1px solid #f59e0b;
+          padding: 2px 4px;
+          border-radius: 2px;
+          letter-spacing: 1px;
+        }
+
+        .protocol-card-desc {
+          font-size: 0.75rem;
+          color: #94a3b8;
+          line-height: 1.6;
+          margin-bottom: 1.25rem;
+          text-align: left;
+        }
+
+        .protocol-badges {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.4rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .protocol-badges span {
+          font-size: 0.5rem;
+          padding: 4px 6px;
+          border: 1px solid rgba(255,255,255,0.2);
+          color: #cbd5e1;
+          letter-spacing: 0.05em;
+        }
+
+        .advanced-badges span {
+          border-color: rgba(168, 85, 247, 0.4);
+          color: #d8b4fe;
+        }
+
+        .protocol-visual {
+          width: 100%;
+          height: 100px;
+          background: rgba(0,0,0,0.3);
+          border: 1px solid rgba(255,255,255,0.05);
+          border-radius: 4px;
+          margin-bottom: 1.5rem;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+
+        .basic-visual .visual-cube {
+          width: 50px;
+          height: 50px;
+          border-radius: 12px;
+          background: radial-gradient(circle, rgba(0,240,255,0.2) 0%, transparent 70%);
+          box-shadow: inset 0 0 15px rgba(0,240,255,0.1);
+          border: 1px solid rgba(0,240,255,0.2);
+        }
+
+        .advanced-visual {
+          background: #000;
+          border-color: rgba(168,85,247,0.3);
+        }
+
+        .visual-diamond {
+          width: 40px;
+          height: 40px;
+          border: 1px solid #a855f7;
+          transform: rotate(45deg);
+          box-shadow: 0 0 20px rgba(168,85,247,0.4);
+          position: relative;
+          z-index: 2;
+        }
+
+        .visual-grid {
+          position: absolute;
+          inset: 0;
+          background-image: 
+            linear-gradient(rgba(168,85,247,0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(168,85,247,0.1) 1px, transparent 1px);
+          background-size: 8px 8px;
+          opacity: 0.5;
+        }
+
+        .visual-text {
+          position: absolute;
+          font-size: 0.4rem;
+          color: #a855f7;
+          letter-spacing: 0.1em;
+          z-index: 3;
+        }
+        .visual-text.top-left { top: 6px; left: 6px; }
+        .visual-text.bottom-right { bottom: 6px; right: 6px; }
+
+        .protocol-btn {
+          width: 100%;
+          padding: 0.875rem;
+          font-family: monospace;
+          font-size: 0.8rem;
+          font-weight: bold;
+          letter-spacing: 0.1em;
+          cursor: pointer;
+          border-radius: 2px;
+          transition: all 0.2s;
+          margin-top: auto;
+        }
+
+        .basic-btn {
+          background: transparent;
+          color: #00f0ff;
+          border: 1px solid #00f0ff;
+          box-shadow: 0 0 10px rgba(0,240,255,0.1);
+        }
+        .basic-btn:active { background: rgba(0,240,255,0.1); }
+
+        .advanced-btn {
+          background: linear-gradient(90deg, #00f0ff 0%, #a855f7 100%);
+          color: #000;
+          border: none;
+        }
+        .advanced-btn:active { filter: brightness(1.2); }
+
+        .protocol-footer {
+          margin-top: auto;
+          width: 100%;
+          text-align: center;
+        }
+
+        .protocol-divider {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 0.75rem;
+          opacity: 0.3;
+        }
+        .protocol-divider span {
+          width: 30px;
+          height: 1px;
+          background: #fff;
+          margin: 0 10px;
+        }
+
+        .protocol-footer p {
+          font-size: 0.5rem;
+          color: #64748b;
+          letter-spacing: 0.1em;
+          line-height: 1.5;
+          max-width: 250px;
+          margin: 0 auto;
+        }
+
         .onboarding-container {
           min-height: 100vh;
           display: flex;
