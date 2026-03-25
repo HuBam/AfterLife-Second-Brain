@@ -5,17 +5,17 @@
 /* Glass Card */
 .glass-card {
     background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border-subtle);
+    backdrop-filter: blur(var(--blur-amount));
+    border: var(--border-thickness) solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    padding: var(--space-lg);
+    padding: var(--card-padding);
     transition: all var(--transition-base);
 }
 
 .glass-card:hover {
     border-color: var(--border-accent);
-    box-shadow: var(--shadow-glow);
-    transform: translateY(-2px);
+    box-shadow: calc(var(--glow-opacity) * 0px) calc(var(--glow-opacity) * 0px) calc(var(--glow-opacity) * 40px) var(--accent-glow);
+    transform: scale(var(--hover-scale)) translateY(calc((var(--hover-scale) - 1) * -100px)); /* small lift */
 }
 
 /* ── Progress Bar ── */
@@ -39,7 +39,7 @@
     position: absolute;
     inset: 0;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    animation: shimmer 2s infinite;
+    animation: shimmer var(--animation-speed) infinite;
 }
 
 /* ── Buttons ── */

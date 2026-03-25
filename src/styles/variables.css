@@ -69,6 +69,15 @@
     --transition-fast: 150ms ease;
     --transition-base: 250ms ease;
     --transition-slow: 400ms ease;
+
+    /* Mode Specific Defaults (Basic Mode) */
+    --card-padding: var(--space-md);
+    --border-thickness: 1px;
+    --animation-speed: 0s;     /* No animations in Basic Mode */
+    --hover-scale: 1;          /* No scale on hover in Basic Mode */
+    --glow-opacity: 0;         /* No glow in Basic Mode */
+    --blur-amount: 0px;        /* No backdrop blur */
+    --bg-card-opacity: 0.95;   /* Solid background */
 }
 
 /* Advanced Mode Variables (Galaxy Theme) */
@@ -77,4 +86,13 @@
     --bg-secondary: #0a0a1a;
     --accent-primary: #a855f7;
     --accent-glow: rgba(168, 85, 247, 0.5);
+
+    /* Mode Specific Defaults (Advanced Mode) */
+    --card-padding: var(--space-lg);
+    --border-thickness: 2px;
+    --animation-speed: 1s;     /* Enable animations */
+    --hover-scale: 1.02;       /* Enable scale on hover */
+    --glow-opacity: 1;         /* Enable glows */
+    --blur-amount: 8px;        /* Enable backdrop blur */
+    --bg-card-opacity: 0.7;    /* Glass effect */
 }

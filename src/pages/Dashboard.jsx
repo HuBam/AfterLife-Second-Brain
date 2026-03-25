@@ -158,8 +158,10 @@ export default function Dashboard() {
 
   // Calculate values
   const overallBalance = Math.round(getOverallBalance() || 0)
-  const totalEntries = Object.values(realms).reduce((sum, r) => sum + (r.entries?.length || 0), 0)
-  const userLevel = Math.floor(totalEntries / 5) + 1
+  const totalXp = useStore(state => state.getTotalXp ? state.getTotalXp() : 0)
+  
+  // Level is now purely driven by XP from habits & streaks
+  const userLevel = Math.floor(totalXp / 500) + 1
   const personality = personalityTypes[user.mbti]
 
   // Menu items for hex menu
@@ -204,7 +206,14 @@ export default function Dashboard() {
           </Link>
           <div className="stat-block right">
             <span className="stat-label">LV</span>
-            <span className="level-value">{userLevel}</span>
+            <span className="level-value">
+              {userLevel}
+              {user.mode === 'advanced' && (
+                <span className="advanced-only" style={{ fontSize: '0.6em', marginLeft: '6px', color: '#f59e0b', textShadow: '0 0 10px #f59e0b' }}>
+                  {totalXp} XP
+                </span>
+              )}
+            </span>
           </div>
         </div>
 
@@ -355,48 +364,49 @@ export default function Dashboard() {
       <style>{`
         .dashboard {
           min-height: 100vh;
-          background: linear-gradient(180deg, #0a1a1a 0%, #0d1f1f 50%, #0a1515 100%);
+          background: var(--bg-primary);
           padding-bottom: 80px;
         }
 
         .dashboard-main {
-          padding: 20px;
+          padding: var(--space-lg);
           max-width: 480px;
           margin: 0 auto;
         }
 
         /* Header */
         .header-row {
-          margin-bottom: 16px;
+          margin-bottom: var(--space-md);
         }
 
         .welcome-text {
           font-size: 0.875rem;
-          color: rgba(255,255,255,0.6);
+          color: var(--text-muted);
           display: block;
         }
 
         .user-name {
           font-size: 1.5rem;
           font-weight: 700;
-          color: var(--accent-primary, #4a9eff);
+          color: var(--accent-primary);
         }
 
         /* Stats Row */
         .stats-row {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 16px;
-          padding: 12px 16px;
-          background: rgba(0,0,0,0.3);
-          border: 1px solid rgba(74,158,255,0.3);
-          border-radius: 8px;
+          margin-bottom: var(--space-md);
+          padding: var(--card-padding);
+          background: var(--bg-card);
+          border: var(--border-thickness) solid var(--border-subtle);
+          border-radius: var(--radius-md);
+          backdrop-filter: blur(var(--blur-amount));
         }
 
         .stat-block {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: var(--space-xs);
         }
 
         .stat-block.right {
@@ -406,39 +416,39 @@ export default function Dashboard() {
         .age-chronos-link {
           text-decoration: none;
           cursor: pointer;
-          border-bottom: 1px solid rgba(74,158,255,0.2);
-          transition: border-color 0.2s;
+          border-bottom: var(--border-thickness) solid var(--border-subtle);
+          transition: border-color var(--transition-fast);
         }
         .age-chronos-link:hover {
-          border-color: rgba(74,158,255,0.7);
+          border-color: var(--border-accent);
         }
-        .age-chronos-link:hover .age-value {
-          text-shadow: 0 0 10px var(--accent-primary, #4a9eff);
+        [data-mode="advanced"] .age-chronos-link:hover .age-value {
+          text-shadow: 0 0 10px var(--accent-primary);
         }
 
         .stat-label {
           font-size: 0.65rem;
           letter-spacing: 1px;
-          color: rgba(255,255,255,0.5);
+          color: var(--text-muted);
         }
 
         .age-value, .level-value {
           font-size: 1.25rem;
           font-weight: 700;
-          color: var(--accent-primary, #4a9eff);
-          font-family: var(--font-mono, monospace);
+          color: var(--accent-primary);
+          font-family: var(--font-display);
         }
 
         /* Gender */
         .gender-row {
           text-align: center;
-          margin-bottom: 12px;
+          margin-bottom: var(--space-sm);
         }
 
         .gender-text {
           font-size: 0.75rem;
           letter-spacing: 2px;
-          color: rgba(255,255,255,0.5);
+          color: var(--text-muted);
         }
 
         /* Profile Row */
@@ -446,8 +456,8 @@ export default function Dashboard() {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 16px;
-          margin-bottom: 20px;
+          gap: var(--space-md);
+          margin-bottom: var(--space-xl);
         }
 
         .mbti-block {
@@ -460,28 +470,28 @@ export default function Dashboard() {
         .mbti-code {
           font-size: 1rem;
           font-weight: 700;
-          color: var(--accent-primary, #4a9eff);
+          color: var(--accent-primary);
           padding: 4px 12px;
-          background: rgba(74,158,255,0.15);
-          border: 1px solid rgba(74,158,255,0.3);
-          border-radius: 20px;
+          background: var(--bg-glass);
+          border: var(--border-thickness) solid var(--border-subtle);
+          border-radius: var(--radius-full);
         }
 
         .mbti-name {
           font-size: 0.7rem;
-          color: rgba(255,255,255,0.5);
+          color: var(--text-muted);
         }
 
         .avatar-block {
           width: 80px;
           height: 80px;
           border-radius: 50%;
-          border: 3px solid var(--accent-primary, #4a9eff);
+          border: calc(var(--border-thickness) + 1px) solid var(--accent-primary);
           display: flex;
           align-items: center;
           justify-content: center;
           overflow: hidden;
-          background: rgba(0,0,0,0.3);
+          background: var(--bg-secondary);
         }
 
         .avatar-img {
@@ -493,7 +503,7 @@ export default function Dashboard() {
         .avatar-letter {
           font-size: 2rem;
           font-weight: 700;
-          color: var(--accent-primary, #4a9eff);
+          color: var(--accent-primary);
         }
 
         .mbti-score-block {
@@ -505,9 +515,9 @@ export default function Dashboard() {
         .score-chip {
           font-size: 0.65rem;
           padding: 2px 6px;
-          background: rgba(255,255,255,0.05);
-          border-radius: 4px;
-          color: rgba(255,255,255,0.6);
+          background: var(--bg-glass);
+          border-radius: var(--radius-sm);
+          color: var(--text-secondary);
         }
 
         /* Skeleton 2D button */
@@ -516,35 +526,41 @@ export default function Dashboard() {
           flex-direction: column;
           align-items: center;
           gap: 2px;
-          color: var(--accent-primary, #4a9eff);
+          color: var(--accent-primary);
           text-decoration: none;
           padding: 6px 10px;
-          border: 1px solid rgba(74,158,255,0.25);
-          border-radius: 8px;
-          background: rgba(74,158,255,0.05);
-          transition: all 0.25s ease;
-          animation: skeleton-breathe 3s ease-in-out infinite;
+          border: var(--border-thickness) solid var(--border-subtle);
+          border-radius: var(--radius-md);
+          background: var(--bg-glass);
+          transition: all var(--transition-base);
           cursor: pointer;
         }
 
+        [data-mode="advanced"] .skeleton-2d-btn {
+          animation: skeleton-breathe 3s ease-in-out infinite;
+        }
+
         .skeleton-2d-btn:hover {
-          border-color: var(--accent-primary, #4a9eff);
-          background: rgba(74,158,255,0.12);
-          box-shadow: 0 0 18px rgba(74,158,255,0.35);
-          transform: scale(1.05);
+          border-color: var(--accent-primary);
+          background: var(--bg-glass);
+          transform: scale(var(--hover-scale));
           animation: none;
+        }
+        
+        [data-mode="advanced"] .skeleton-2d-btn:hover {
+          box-shadow: 0 0 18px var(--accent-glow);
         }
 
         .skeleton-hint {
           font-size: 0.55rem;
           letter-spacing: 1.5px;
-          color: rgba(74,158,255,0.6);
-          font-family: var(--font-mono, monospace);
+          color: var(--text-secondary);
+          font-family: var(--font-display);
         }
 
         @keyframes skeleton-breathe {
-          0%, 100% { filter: drop-shadow(0 0 3px rgba(74,158,255,0.3)); }
-          50% { filter: drop-shadow(0 0 9px rgba(74,158,255,0.65)); }
+          0%, 100% { filter: drop-shadow(0 0 3px var(--border-accent)); }
+          50% { filter: drop-shadow(0 0 9px var(--accent-glow)); }
         }
 
         /* Streak */
@@ -553,22 +569,22 @@ export default function Dashboard() {
           align-items: center;
           justify-content: center;
           gap: 8px;
-          margin-bottom: 16px;
+          margin-bottom: var(--space-md);
         }
 
         .streak-icon {
-          color: #f59e0b;
+          color: var(--realm-elysia);
         }
 
         .streak-num {
           font-size: 1.25rem;
           font-weight: 700;
-          color: #f59e0b;
+          color: var(--realm-elysia);
         }
 
         .streak-label {
           font-size: 0.75rem;
-          color: rgba(255,255,255,0.5);
+          color: var(--text-muted);
         }
 
         /* Echo Button */
@@ -578,42 +594,51 @@ export default function Dashboard() {
           justify-content: center;
           gap: 8px;
           width: 100%;
-          padding: 12px;
-          background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.1));
-          border: 1px solid rgba(245,158,11,0.4);
-          border-radius: 8px;
-          color: #f59e0b;
+          padding: var(--space-md);
+          background: var(--bg-card);
+          border: var(--border-thickness) solid var(--border-accent);
+          border-radius: var(--radius-md);
+          color: var(--text-primary);
           font-weight: 600;
-          margin-bottom: 20px;
+          margin-bottom: var(--space-xl);
+          transition: all var(--transition-base);
+          backdrop-filter: blur(var(--blur-amount));
         }
 
         .echo-btn:hover {
-          background: rgba(245,158,11,0.3);
+          background: var(--bg-glass);
+          box-shadow: 0 0 calc(20px * var(--glow-opacity)) var(--accent-glow);
+          transform: scale(var(--hover-scale));
         }
 
         /* Realms */
         .realms-section {
-          margin-bottom: 20px;
+          margin-bottom: var(--space-xl);
+          padding: var(--card-padding);
+          background: var(--bg-card);
+          border: var(--border-thickness) solid var(--border-subtle);
+          border-radius: var(--radius-lg);
+          backdrop-filter: blur(var(--blur-amount));
         }
 
         .section-label {
           font-size: 0.7rem;
           letter-spacing: 2px;
-          color: rgba(255,255,255,0.4);
+          color: var(--text-muted);
           display: block;
-          margin-bottom: 12px;
+          margin-bottom: var(--space-md);
         }
 
         .realm-list {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: var(--space-sm);
         }
 
         .realm-item {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: var(--space-sm);
         }
 
         .realm-icon {
@@ -625,20 +650,20 @@ export default function Dashboard() {
         .realm-bar {
           flex: 1;
           height: 8px;
-          background: rgba(255,255,255,0.1);
-          border-radius: 4px;
+          background: var(--bg-tertiary);
+          border-radius: var(--radius-full);
           overflow: hidden;
         }
 
         .realm-fill {
           height: 100%;
-          border-radius: 4px;
-          transition: width 0.3s ease;
+          border-radius: var(--radius-full);
+          transition: width var(--transition-slow);
         }
 
         .realm-percent {
           font-size: 0.75rem;
-          color: rgba(255,255,255,0.6);
+          color: var(--text-secondary);
           width: 35px;
           text-align: right;
         }
@@ -652,13 +677,14 @@ export default function Dashboard() {
           display: flex;
           align-items: center;
           justify-content: center;
+          backdrop-filter: blur(4px);
         }
 
         .menu-container {
-          background: rgba(10,26,26,0.95);
-          border: 1px solid rgba(74,158,255,0.3);
-          border-radius: 16px;
-          padding: 24px;
+          background: var(--bg-card);
+          border: var(--border-thickness) solid var(--border-subtle);
+          border-radius: var(--radius-lg);
+          padding: var(--space-xl);
           position: relative;
         }
 
@@ -668,14 +694,14 @@ export default function Dashboard() {
           right: 12px;
           background: none;
           border: none;
-          color: rgba(255,255,255,0.6);
+          color: var(--text-muted);
           cursor: pointer;
         }
 
         .menu-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
+          gap: var(--space-md);
         }
 
         .menu-item {
@@ -689,7 +715,7 @@ export default function Dashboard() {
         .menu-icon {
           width: 50px;
           height: 50px;
-          border-radius: 12px;
+          border-radius: var(--radius-md);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -698,7 +724,7 @@ export default function Dashboard() {
 
         .menu-label {
           font-size: 0.75rem;
-          color: rgba(255,255,255,0.7);
+          color: var(--text-secondary);
         }
 
         /* Bottom Nav */
@@ -710,8 +736,8 @@ export default function Dashboard() {
           display: flex;
           justify-content: space-around;
           padding: 12px 0;
-          background: rgba(10,20,20,0.95);
-          border-top: 1px solid rgba(74,158,255,0.2);
+          background: var(--bg-card);
+          border-top: var(--border-thickness) solid var(--border-subtle);
           backdrop-filter: blur(10px);
         }
 
@@ -720,17 +746,19 @@ export default function Dashboard() {
           flex-direction: column;
           align-items: center;
           gap: 4px;
-          color: rgba(255,255,255,0.5);
+          color: var(--text-muted);
           font-size: 0.7rem;
           background: none;
           border: none;
           cursor: pointer;
+          transition: color var(--transition-fast);
         }
 
         .nav-item.active {
-          color: var(--accent-primary, #4a9eff);
+          color: var(--accent-primary);
         }
       `}</style>
     </div>
   )
 }
+

@@ -308,8 +308,17 @@ export default function Timeline() {
                                             )}
 
                                             {/* Context Tags based on Realm */}
-                                            <div className="flex gap-xs mt-sm">
-                                                {event.rank && <span className="text-xs px-xs py-0.5 rounded bg-white/10 text-accent">Rank {event.rank}</span>}
+                                            <div className="flex gap-xs mt-sm items-center flex-wrap">
+                                                {event.xp && (
+                                                    <span className="advanced-only text-xs px-2 py-0.5 rounded-full font-bold text-[#f59e0b] bg-[#f59e0b]/10 animate-pulse border border-[#f59e0b]/30">
+                                                        +{event.xp} XP
+                                                    </span>
+                                                )}
+                                                {event.rank && (
+                                                    <span className="advanced-only text-xs px-xs py-0.5 rounded bg-white/10 text-accent font-display border border-accent/30">
+                                                        Rank {event.rank}
+                                                    </span>
+                                                )}
                                                 {event.mood && <span className="text-xs px-xs py-0.5 rounded bg-white/10">Mood: {event.mood}</span>}
                                                 <span className="text-xs px-xs py-0.5 rounded border border-white/10 text-muted uppercase">
                                                     {event.realm}

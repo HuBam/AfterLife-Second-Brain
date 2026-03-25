@@ -662,6 +662,31 @@ export const useStore = create(
                 return allEntries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             },
 
+            // Computed - Habits & Streaks XP
+            getTotalXp: () => {
+                const state = get()
+                const habits = state.user?.habits || []
+                const globalStreak = state.user?.streak || 0
+                
+                let xp = 0
+                
+                // 50 XP per habit completion
+                habits.forEach(habit => {
+                    const completions = habit.completions || []
+                    xp += completions.length * 50
+                    
+                    // Streak multiplier loop for individual habits
+                    // E.g., if you complete consecutive days, maybe award bonus.
+                    // Keep it simple: flat +10 XP per completion for creating dopamine!
+                    // xp += completions.length * 10;
+                })
+
+                // Global streak bonus: 100 XP per active streak day
+                xp += globalStreak * 100
+
+                return xp
+            },
+
             // Phase 3: Dynamic Life Expectancy
             getLifeExpectancy: () => {
                 const state = get()

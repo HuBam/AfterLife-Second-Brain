@@ -91,3 +91,14 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ========================================
+   Mode Specific Visibility
+   ======================================== */
+[data-mode="basic"] .advanced-only {
+    display: none !important;
+}
+
+[data-mode="advanced"] .basic-only {
+    display: none !important;
+}

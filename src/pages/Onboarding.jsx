@@ -80,7 +80,7 @@ export default function Onboarding() {
             spiritAnimal: finalSpiritAnimal,
             westernZodiac: getWesternZodiac(formData.birthDate),
             chineseZodiac: getChineseZodiac(new Date(formData.birthDate).getFullYear()),
-            mode: formData.mode,
+            mode: 'basic', // Forced to basic for now until advanced mode UI is fully designed
         })
 
         // Add starter skills to Cerebra
@@ -139,123 +139,91 @@ export default function Onboarding() {
 
     // Step 1 — Mode Selection
     const ModeStep = () => (
-        <div className="protocol-container">
-            <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="protocol-header"
-            >
-                <div className="os-version">
-                    <div className="os-icon"></div>
-                    <span>NEURAL OS V2.0.4</span>
-                    <Radio size={14} className="os-signal" />
-                </div>
-                
-                <h2 className="protocol-title">SELECT INTERFACE PROTOCOL</h2>
-                <p className="protocol-subtitle">
-                    AWAITING USER SYNCHRONIZATION AND DEPLOYMENT ARCHITECTURE
-                </p>
-            </motion.div>
-
-            <div className="protocol-slider">
-                {/* Basic Card */}
-                <motion.div 
-                    className={`protocol-card basic ${formData.mode === 'basic' ? 'selected' : ''}`}
-                    onClick={() => setFormData({ ...formData, mode: 'basic' })}
-                    whileTap={{ scale: 0.98 }}
-                >
-                    <div className="protocol-bg-icon">
-                        <Globe size={120} strokeWidth={1} />
-                    </div>
-                    <div className="protocol-icon-wrapper">
-                        <Globe size={24} />
-                    </div>
-                    
-                    <h3 className="protocol-card-title">BASIC</h3>
-                    
-                    <p className="protocol-card-desc">
-                        Streamlined experience. Essential thought capture and organization. Designed for clarity and rapid conceptual processing.
-                    </p>
-                    
-                    <div className="protocol-badges">
-                        <span>MINIMALIST UI</span>
-                        <span>CORE NODES</span>
-                        <span>ZEN MODE</span>
-                    </div>
-
-                    <div className="protocol-visual basic-visual">
-                        <div className="visual-cube"></div>
-                    </div>
-
-                    <button 
-                        className="protocol-btn basic-btn"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setFormData({ ...formData, mode: 'basic' });
-                            setStep(2);
-                        }}
-                    >
-                        INITIALIZE BASIC LINK
-                    </button>
-                </motion.div>
-
-                {/* Advanced Card */}
-                <motion.div 
-                    className={`protocol-card advanced ${formData.mode === 'advanced' ? 'selected' : ''}`}
-                    onClick={() => setFormData({ ...formData, mode: 'advanced' })}
-                    whileTap={{ scale: 0.98 }}
-                >
-                    <div className="protocol-bg-icon">
-                        <Gamepad2 size={120} strokeWidth={1} />
-                    </div>
-                    
-                    <div className="protocol-header-row">
-                        <div className="protocol-icon-wrapper advanced-icon">
-                            <Gamepad2 size={24} />
-                        </div>
-                        <div className="protocol-status-bars">
-                            <span></span><span></span><span></span>
-                        </div>
-                    </div>
-                    
-                    <div className="protocol-title-row">
-                        <h3 className="protocol-card-title">ADVANCED</h3>
-                        <span className="combat-ready-badge">COMBAT READY</span>
-                    </div>
-                    
-                    <p className="protocol-card-desc">
-                        Full tactical HUD. Real-time cognitive tracking & node visualization. High-density data stream for professional neural architects.
-                    </p>
-                    
-                    <div className="protocol-badges advanced-badges">
-                        <span>NEURAL MAPPING</span>
-                        <span>COGNITIVE TELEMETRY</span>
-                        <span>SUB-ROUTINE ACCESS</span>
-                    </div>
-
-                    <div className="protocol-visual advanced-visual">
-                        <div className="visual-grid"></div>
-                        <span className="visual-text top-left">NODE_SCAN: ACTIVE</span>
-                        <span className="visual-text bottom-right">LATENCY: 0.002ms</span>
-                        <div className="visual-diamond"></div>
-                    </div>
-
-                    <button 
-                        className="protocol-btn advanced-btn"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setFormData({ ...formData, mode: 'advanced' });
-                            setStep(2);
-                        }}
-                    >
-                        ENGAGE TACTICAL SYNC
-                    </button>
-                </motion.div>
-            </div>
+        <div className="mode-selection-container">
+            <h2 className="mode-title mb-lg">Choose Your Experience</h2>
             
-            <div className="protocol-footer">
-                <div className="protocol-divider"><span></span></div>
-                <p>WARNING: PROTOCOL SELECTION IS PERMANENT FOR CURRENT SESSION. ENSURE NEURAL SHIELDING IS ACTIVE BEFORE INITIALIZATION.</p>
+            {/* Slide Tab Switcher */}
+            <div className="mode-tab-switcher">
+                <button 
+                    className={`mode-tab ${formData.mode === 'basic' ? 'active' : ''}`}
+                    onClick={() => setFormData({ ...formData, mode: 'basic' })}
+                >
+                    {formData.mode === 'basic' && (
+                        <motion.div className="mode-tab-bg" layoutId="modeTabBg" />
+                    )}
+                    <span className="relative z-10">Basic</span>
+                </button>
+                <button 
+                    className={`mode-tab ${formData.mode === 'advanced' ? 'active' : ''}`}
+                    onClick={() => setFormData({ ...formData, mode: 'advanced' })}
+                >
+                    {formData.mode === 'advanced' && (
+                        <motion.div className="mode-tab-bg" layoutId="modeTabBg" />
+                    )}
+                    <span className="relative z-10">Advanced</span>
+                </button>
+            </div>
+
+            {/* Mode Experience Card */}
+            <div className="mode-card-wrapper mt-xl">
+                <AnimatePresence mode="wait">
+                    {formData.mode === 'basic' ? (
+                        <motion.div 
+                            key="basic-card"
+                            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                            transition={{ duration: 0.2 }}
+                            className="experience-card basic-card"
+                        >
+                            <div className="experience-icon mb-md">
+                                <Globe size={48} strokeWidth={1} />
+                            </div>
+                            <h3 className="experience-card-title mb-sm">Basic Experience</h3>
+                            <p className="experience-card-desc mb-lg">
+                                A streamlined, distraction-free environment focused purely on rapid thought capture and organization.
+                            </p>
+                            <div className="experience-tags">
+                                <span>Minimalist</span>
+                                <span>Basic</span>
+                                <span>Compact</span>
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <motion.div 
+                            key="advanced-card"
+                            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                            transition={{ duration: 0.2 }}
+                            className="experience-card advanced-card"
+                        >
+                            <div className="experience-icon mb-md">
+                                <Gamepad2 size={48} strokeWidth={1.5} />
+                            </div>
+                            <h3 className="experience-card-title mb-sm">Advanced Experience</h3>
+                            <p className="experience-card-desc mb-lg">
+                                Deep gamification, dynamic visuals, and complex data telemetry for immersive professional tracking.
+                            </p>
+                            <div className="experience-tags">
+                                <span>Game Style</span>
+                                <span>Extra Details</span>
+                                <span>Animation</span>
+                                <span>Vibrant</span>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+
+            <div className="mt-xl flex justify-center">
+                <button 
+                    className="btn btn-primary"
+                    style={{ minWidth: '200px' }}
+                    onClick={() => setStep(2)}
+                >
+                    Continue <ArrowRight size={18} />
+                </button>
             </div>
         </div>
     )

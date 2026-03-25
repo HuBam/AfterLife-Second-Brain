@@ -1,0 +1,218 @@
+/* ========================================
+   Onboarding Mode Selection UI - Clean Slider & Card
+   ======================================== */
+
+.mode-selection-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    color: #e2e8f0;
+}
+
+.mode-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 2rem;
+    color: #fff;
+    letter-spacing: 0.05em;
+}
+
+/* Slide Tab Switcher */
+.mode-tab-switcher {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 100px;
+    padding: 4px;
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto 2rem auto;
+}
+
+.mode-tab {
+    flex: 1;
+    position: relative;
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: 0.9rem;
+    z-index: 1;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    border-radius: 100px;
+}
+
+.mode-tab.active {
+    color: #fff;
+    font-weight: 600;
+}
+
+.mode-tab-bg {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 100px;
+    z-index: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Card Wrapper & Styles */
+.mode-card-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    perspective: 1000px;
+    min-height: 380px; /* Pre-allocate space to avoid jumping */
+}
+
+/* The Playing Card Base Design */
+.experience-card {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 2.5/3.5;
+    background: #0d1117;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+}
+
+.experience-card:hover {
+    transform: translateY(-5px);
+}
+
+.experience-icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin-bottom: 1.5rem;
+}
+
+.experience-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.05em;
+}
+
+.experience-card-desc {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.5;
+    margin-bottom: 2rem;
+    flex-grow: 1;
+}
+
+/* Tags Container */
+.experience-tags {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.experience-tags span {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 100px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ====================================
+   BASIC MODE - Minimalist Execution
+   ==================================== */
+.basic-card {
+    background: #111418;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.basic-card .experience-icon {
+    background: rgba(255, 255, 255, 0.03);
+    color: #a1a1aa;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.basic-card .experience-card-title {
+    color: #e4e4e7;
+}
+
+.basic-card .experience-tags span {
+    background: #18181b;
+    color: #a1a1aa;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ====================================
+   ADVANCED MODE - Vibrant Gamification
+   ==================================== */
+.advanced-card {
+    background: linear-gradient(145deg, #110e20 0%, #0a0a14 100%);
+    border: 1px solid rgba(139, 92, 246, 0.4); /* Purple vibrant border */
+    box-shadow: 
+        0 10px 40px rgba(139, 92, 246, 0.2),
+        inset 0 0 20px rgba(139, 92, 246, 0.1);
+}
+
+/* Subtle animated background for the advanced card */
+.advanced-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.15) 0%, transparent 60%);
+    opacity: 0.8;
+}
+
+.advanced-card:hover {
+    box-shadow: 
+        0 15px 50px rgba(139, 92, 246, 0.3),
+        inset 0 0 30px rgba(139, 92, 246, 0.2);
+}
+
+.advanced-card .experience-icon {
+    background: rgba(139, 92, 246, 0.1);
+    color: #a78bfa;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+    animation: glowPulse 2s infinite alternate;
+}
+
+@keyframes glowPulse {
+    0% { box-shadow: 0 0 10px rgba(139, 92, 246, 0.2); }
+    100% { box-shadow: 0 0 25px rgba(139, 92, 246, 0.6); }
+}
+
+.advanced-card .experience-card-title {
+    color: #c4b5fd;
+    text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+.advanced-card .experience-tags span {
+    background: rgba(139, 92, 246, 0.1);
+    color: #ddd6fe;
+    border-color: rgba(139, 92, 246, 0.3);
+    text-shadow: 0 0 5px rgba(139, 92, 246, 0.3);
+} 
+
